@@ -1,6 +1,3 @@
-
-
-
 -- Création de la base de données
 CREATE DATABASE youdemy;
 USE youdemy;
