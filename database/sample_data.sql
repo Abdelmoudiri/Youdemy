@@ -11,11 +11,12 @@ CREATE TABLE users (
     lastname VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('visitor', 'student', 'teacher', 'admin') DEFAULT 'visitor',
+    role ENUM('student', 'teacher','admin') NOT NULL,
     status ENUM('pending', 'active', 'suspended') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+drop TABLE users;
+select * from users;
 -- Table des cours
 CREATE TABLE courses (
     id INT AUTO_INCREMENT PRIMARY KEY,
