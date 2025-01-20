@@ -5,22 +5,87 @@
     require_once "../../classes/teacher.php";
     require_once "../../classes/Categorie.php";
     require_once "../../classes/course.php";
-    require_once "../../classes/CoursDocument.php";
+    require_once "../../classes/DocumentCourse.php";
+    require_once "../../classes/Tag.php";
 
-
+    if (!isset($_SESSION['id_user']) || empty($_SESSION['id_user'])) {
+        header('Location: ../login.php');
+        exit();
+    }
 
     $enseignant = new Teacher(
-        (int)$_SESSION['id_user'],
-        $_SESSION['nom'],
-        $_SESSION['prenom'],
-        '',
-        $_SESSION['email'],
-        '',
-        $_SESSION['role'],
-        'Actif',  // Statut par défaut car l'utilisateur est connecté
-        $_SESSION['photo']
+        $_SESSION['id_user'],
+        $_SESSION['nom'] ?? '',
+        $_SESSION['prenom'] ?? '',
+        $_SESSION['telephone'] ?? '',
+        $_SESSION['email'] ?? '',
+        $_SESSION['password'] ?? '',
+        $_SESSION['role'] ?? '',
+        $_SESSION['status'] ?? 'Actif',
+        $_SESSION['photo'] ?? 'user.png'
     );
 
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_POST['titre']) && isset($_POST['description']) && isset($_FILES['couverture']) && isset($_FILES['pdf_file'])) {
+            try {
+                // Vérification des fichiers
+                if ($_FILES['couverture']['error'] !== UPLOAD_ERR_OK || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Erreur lors du téléchargement des fichiers");
+                }
+
+                // Création des noms de fichiers uniques
+                $cover_extension = pathinfo($_FILES['couverture']['name'], PATHINFO_EXTENSION);
+                $pdf_extension = pathinfo($_FILES['pdf_file']['name'], PATHINFO_EXTENSION);
+                $unique_prefix = uniqid();
+                $cover_filename = $unique_prefix . '_cover.' . $cover_extension;
+                $pdf_filename = $unique_prefix . '_document.' . $pdf_extension;
+
+                // Déplacement des fichiers
+                $upload_path = '../../uploads/';
+                if (!file_exists($upload_path)) {
+                    mkdir($upload_path, 0777, true);
+                }
+
+                if (!move_uploaded_file($_FILES['couverture']['tmp_name'], $upload_path . $cover_filename)) {
+                    throw new Exception("Erreur lors du déplacement de l'image de couverture");
+                }
+                if (!move_uploaded_file($_FILES['pdf_file']['tmp_name'], $upload_path . $pdf_filename)) {
+                    throw new Exception("Erreur lors du déplacement du fichier PDF");
+                }
+
+                // Création du cours
+                $new_course = new DocumentCourse(
+                    htmlspecialchars($_POST['titre']),
+                    htmlspecialchars($_POST['description']),
+                    $cover_filename,
+                    $pdf_filename,
+                    'pdf',
+                    $_FILES['pdf_file']['size'],
+                    'En Attente',
+                    'Facile'
+                );
+
+                $result = $new_course->create($enseignant->getId());
+                
+                if($result) {
+                    $_SESSION['success_message'] = 'Cours ajouté avec succès !';
+                    error_log("Cours créé avec succès. ID: " . $result);
+                } else {
+                    $_SESSION['error_message'] = 'Erreur lors de la création du cours. Veuillez réessayer.';
+                    error_log("Échec de la création du cours");
+                }
+                
+                header('Location: courses.php');
+                exit();
+
+            } catch (Exception $e) {
+                error_log("Exception lors de la création du cours : " . $e->getMessage());
+                $_SESSION['error_message'] = 'Erreur : ' . $e->getMessage();
+                header('Location: dashboard.php');
+                exit();
+            }
+        }
+    }
 
     if ($_SESSION['role'] !== 'Enseignant') {
         if ($_SESSION['role'] === 'Admin') {
@@ -39,69 +104,6 @@
             session_destroy();
             header("Location: ../guest");
             exit;
-        }
-
-        if(isset($_POST['add_course'])) {
-            try {
-                // Validation des fichiers
-                $allowed_image_types = ['image/jpeg', 'image/png', 'image/gif'];
-                $max_file_size = 5 * 1024 * 1024; // 5MB
-
-                // Vérification de l'image de couverture
-                if (!isset($_FILES['couverture']) || $_FILES['couverture']['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception("Erreur lors du téléchargement de l'image de couverture");
-                }
-                if (!in_array($_FILES['couverture']['type'], $allowed_image_types)) {
-                    throw new Exception("Type de fichier non autorisé pour l'image de couverture");
-                }
-                if ($_FILES['couverture']['size'] > $max_file_size) {
-                    throw new Exception("L'image de couverture est trop volumineuse (max 5MB)");
-                }
-
-                // Vérification du PDF
-                if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception("Erreur lors du téléchargement du PDF");
-                }
-                if ($_FILES['pdf_file']['type'] !== 'application/pdf') {
-                    throw new Exception("Le fichier doit être au format PDF");
-                }
-                if ($_FILES['pdf_file']['size'] > $max_file_size) {
-                    throw new Exception("Le fichier PDF est trop volumineux (max 5MB)");
-                }
-
-                // Création des noms de fichiers uniques
-                $cover_extension = pathinfo($_FILES['couverture']['name'], PATHINFO_EXTENSION);
-                $pdf_extension = pathinfo($_FILES['pdf_file']['name'], PATHINFO_EXTENSION);
-                $unique_prefix = uniqid();
-                $cover_filename = $unique_prefix . '_cover.' . $cover_extension;
-                $pdf_filename = $unique_prefix . '_document.' . $pdf_extension;
-
-                // Déplacement des fichiers
-                $upload_path = '../../uploads/';
-                move_uploaded_file($_FILES['couverture']['tmp_name'], $upload_path . $cover_filename);
-                move_uploaded_file($_FILES['pdf_file']['tmp_name'], $upload_path . $pdf_filename);
-
-                // Création du cours
-                $new_course = new CoursDocument(
-                    htmlspecialchars($_POST['titre']),
-                    htmlspecialchars($_POST['description']),
-                    $cover_filename,
-                    $pdf_filename,
-                    'pdf',
-                    $_FILES['pdf_file']['size'],
-                    'En Attente',
-                    'Facile'
-                );
-
-                if($new_course->create($enseignant->getId())) {
-                    echo "<script>alert('Cours ajouté avec succès !');</script>";
-                } else {
-                    throw new Exception("Erreur lors de la création du cours");
-                }
-
-            } catch (Exception $e) {
-                echo "<script>alert('Erreur : " . addslashes($e->getMessage()) . "');</script>";
-            }
         }
     }
 ?>
@@ -162,6 +164,20 @@
     </header>
 
     <main class="bg-gray-100 pt-24 pb-12 px-5">
+        <?php if(isset($_SESSION['success_message'])): ?>
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline"><?php echo $_SESSION['success_message']; ?></span>
+            </div>
+            <?php unset($_SESSION['success_message']); ?>
+        <?php endif; ?>
+
+        <?php if(isset($_SESSION['error_message'])): ?>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline"><?php echo $_SESSION['error_message']; ?></span>
+            </div>
+            <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+
         <!-- Statistiques -->
         <section class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             <!-- Approved Courses -->

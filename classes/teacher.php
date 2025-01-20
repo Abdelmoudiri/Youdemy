@@ -7,8 +7,9 @@
 
         private $database;
 
-        public function __construct($id,$nom,$prenom,$telephone,$email,$password,$role,$status,$photo) {
-            parent::__construct( $nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
+        public function __construct($id = null, $nom = '', $prenom = '', $telephone = '', $email = '', $password = '', $role = '', $status = '', $photo = 'user.png') {
+            parent::__construct($nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
+            $this->id = $id;
             $this->database = Database::getInstance()->getConnection();
 
         }

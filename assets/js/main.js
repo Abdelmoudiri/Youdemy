@@ -130,6 +130,23 @@ document.addEventListener('DOMContentLoaded', function(){
         initTestimonialsCarousel();
     }
 
+    // Fonctions pour le modal d'ajout de cours
+    function openAddCourseModal() {
+        document.getElementById('addCourseModal').classList.remove('hidden');
+    }
+
+    function closeAddCourseModal() {
+        document.getElementById('addCourseModal').classList.add('hidden');
+    }
+
+    // Fermer le modal si on clique en dehors
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('addCourseModal');
+        if (event.target === modal) {
+            closeAddCourseModal();
+        }
+    });
+
     // Registration Form Handling
     const registerForm = document.getElementById('registerForm');
 
@@ -186,6 +203,5 @@ document.addEventListener('DOMContentLoaded', function(){
             }
         });
     }
-
 
 });

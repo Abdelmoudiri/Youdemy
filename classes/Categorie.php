@@ -4,9 +4,35 @@ require_once __DIR__ . '/../config/db.php';
 
 class Categorie {
     private $database;
+    private $id;
+    private $nom;
+    private $description;
 
     public function __construct() {
         $this->database = Database::getInstance()->getConnection();
+    }
+
+    public function getName() {
+        return $this->nom;
+    }
+
+    public function loadById($id) {
+        try {
+            $query = "SELECT * FROM categories WHERE id_categorie = ?";
+            $stmt = $this->database->prepare($query);
+            $stmt->execute([$id]);
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($data) {
+                $this->id = $data['id_categorie'];
+                $this->nom = $data['nom_categorie'];
+                $this->description = $data['description'];
+                return true;
+            }
+            return false;
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors du chargement de la catégorie : " . $e->getMessage());
+        }
     }
 
     public function getCoursesPerCategory($status) {
