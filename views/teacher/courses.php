@@ -22,6 +22,13 @@ $enseignant = new Teacher(
 
 $new_cour = new DocumentCourse('', '', '', '', '', 0, 'En Attente', 'Facile');
 
+// Récupérer les catégories et tags disponibles
+$categorie = new Categorie();
+$categories = $categorie->getAllCategories();
+    
+$tag = new Tag('');
+$tags = $tag->getAllTags();
+
 if ($_SESSION['role'] !== 'Enseignant') {
     if ($_SESSION['role'] === 'Admin') {
         header("Location: ../admin/dashboard.php");
@@ -146,8 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="button" id="btn_ajouter_cour" class="bg-blue-600 text-md text-white py-1 px-4 rounded-md duration-300 hover:px-5 hover:bg-blue-800">Ajouter un Cours</button>
         </section>
         <!-- Modal d'ajout de cours -->
-        <div id="addCourseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-            <div class="bg-white p-8 rounded-lg w-[500px] mx-auto mt-20">
+        <div id="addCourseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto p-4">
+            <div class="bg-white p-8 rounded-lg w-full max-w-[500px] mx-auto my-8">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">Ajouter un nouveau cours</h2>
                     <button onclick="closeAddCourseModal()" class="text-gray-600 hover:text-gray-800">
@@ -176,6 +183,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="file" name="pdf_file" accept=".pdf" required 
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
                         <p class="text-sm text-gray-500 mt-1">Format accepté : PDF uniquement (Max: 5MB)</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                        <select name="categorie" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="">Sélectionnez une catégorie</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?php echo $cat['id_categorie']; ?>"><?php echo $cat['nom_categorie']; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+                        <div class="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto p-2 border border-gray-300 rounded-md">
+                            <?php foreach ($tags as $t): ?>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" name="tags[]" value="<?php echo $t['id_tag']; ?>" 
+                                       class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                <span class="text-sm text-gray-700"><?php echo $t['nom_tag']; ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <div class="flex justify-end gap-3 mt-6">
                         <button type="button" onclick="closeAddCourseModal()" 

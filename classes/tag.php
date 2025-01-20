@@ -112,6 +112,29 @@
                 throw new Exception("Erreurs Lors de La récupération des Tags : ". $e->getMessage());
             }
         }
+
+        public function getAllTags() {
+            try {
+                $query = "SELECT * FROM tags ORDER BY nom_tag";
+                $stmt = $this->database->prepare($query);
+                $stmt->execute();
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (PDOException $e) {
+                throw new Exception("Erreur lors de la récupération des tags : " . $e->getMessage());
+                return [];
+            }
+        }
+
+        public function addCourseTag($courseId, $tagId) {
+            try {
+                $query = "INSERT INTO cours_tags (id_cours, id_tag) VALUES (?, ?)";
+                $stmt = $this->database->prepare($query);
+                return $stmt->execute([$courseId, $tagId]);
+            } catch (PDOException $e) {
+                throw new Exception("Erreur lors de l'ajout du tag au cours : " . $e->getMessage());
+                return false;
+            }
+        }
         
     }
 ?>

@@ -84,4 +84,27 @@ class Categorie {
             die("Erreur lors de la suppression de la catégorie : " . $e->getMessage());
         }
     }
+
+    public function getAllCategories() {
+        try {
+            $query = "SELECT * FROM categories ORDER BY nom_categorie";
+            $stmt = $this->database->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de la récupération des catégories : " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function addCourseCategory($courseId, $categoryId) {
+        try {
+            $query = "INSERT INTO cours_categories (id_cours, id_categorie) VALUES (?, ?)";
+            $stmt = $this->database->prepare($query);
+            return $stmt->execute([$courseId, $categoryId]);
+        } catch (PDOException $e) {
+            throw new Exception("Erreur lors de l'ajout de la catégorie au cours : " . $e->getMessage());
+            return false;
+        }
+    }
 }

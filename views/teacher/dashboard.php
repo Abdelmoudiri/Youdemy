@@ -68,6 +68,20 @@
                 $result = $new_course->create($enseignant->getId());
                 
                 if($result) {
+                    // Ajouter la catégorie
+                    if(isset($_POST['categorie']) && !empty($_POST['categorie'])) {
+                        $categorie = new Categorie();
+                        $categorie->addCourseCategory($result, $_POST['categorie']);
+                    }
+
+                    // Ajouter les tags
+                    if(isset($_POST['tags']) && is_array($_POST['tags'])) {
+                        $tag = new Tag('');
+                        foreach($_POST['tags'] as $tag_id) {
+                            $tag->addCourseTag($result, $tag_id);
+                        }
+                    }
+
                     $_SESSION['success_message'] = 'Cours ajouté avec succès !';
                     error_log("Cours créé avec succès. ID: " . $result);
                 } else {
