@@ -1,7 +1,7 @@
 <?php
     session_start();
 
-    require_once '../../classes/category.php';
+    require_once __DIR__.'../../classes/category.php';
 
     $category = new Categorie('','');
 
