@@ -2,29 +2,32 @@
 
     require_once __DIR__ .'./../config/db.php';
 
-    class Course {
-        private int $id;
-        private string | null $titre;
-        private string | null $description;
-        private string | null $couverture;
-        private string | null $contenu;
-        private string | null $video;
-        private string | null $status;
-        private string | null $date;
-        private string | null $niveau;
-        private $database;
-
-        public function __construct($titre,$description,$couverture,$contenu,$video,$statut,$niveau) {
+    abstract class Course {
+        protected int $id;
+        protected string $titre;
+        protected string $description;
+        protected string $couverture;
+        protected string $status;
+        protected string $date;
+        protected string $niveau;
+        protected $database;
+    
+        public function __construct(
+            string $titre,
+            string $description,
+            string $couverture,
+            string $statut,
+            string $niveau
+        ) {
             $this->titre = $titre;
             $this->description = $description;
             $this->couverture = $couverture;
-            $this->contenu = $contenu;
-            $this->video = $video;
             $this->status = $statut;
-            $this->date = $statut;
+            $this->date = date('Y-m-d H:i:s');
             $this->niveau = $niveau;
             $this->database = Database::getInstance()->getConnection();
         }
+    
 
         // GETTERS
         public function getId():int{
@@ -36,12 +39,7 @@
         public function getDescription():string{
             return $this->description;
         }
-        public function getContenu():string | NULL{
-            return $this->contenu;
-        }
-        public function getVideo():string{
-            return $this->video;
-        }
+       
         public function getCouverture():string{
             return $this->couverture;
         }
@@ -62,12 +60,7 @@
         public function setDescription($description):void{
             $this->description = $description;
         }
-        public function setContenu($contenu):void{
-            $this->contenu = $contenu;
-        }
-        public function setVideo($video):void{
-            $this->video = $video;
-        }
+      
         public function setCouverture($couverture):void{
             $this->couverture = $couverture;
         }
@@ -81,6 +74,7 @@
             $this->niveau = $niveau;
         }
 
+        abstract public function afficherDetails();
 
         // GET ALL COURSES WITH CATEGORY NAME AND TEACHER FULL NAME
         public function allCourses($status){
@@ -380,9 +374,7 @@
             }
         }
 
-
-
-        //
+        // GET UNSUBSCRIBED COURSES OF A STUDENT
         public function getUnsubscribedCourses($id_etudiant, $status, $limit, $offset) {
             try {
                 $query = "SELECT 
@@ -433,8 +425,7 @@
             }
         }
 
-
-        //
+        // COUNT UNSUBSCRIBED COURSES OF A STUDENT
         public function countUnsubscribedCourses($id_etudiant, $status) {
             try {
                 $query = "SELECT COUNT(*) AS total 
@@ -456,8 +447,5 @@
                 throw new Exception("Erreur lors du comptage des cours non inscrits : " . $e->getMessage());
             }
         }
-        
-        
-        
         
     }
