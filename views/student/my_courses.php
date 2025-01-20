@@ -2,13 +2,16 @@
 
     session_start();
 
+    require_once '../../config/db.php';
     require_once '../../classes/course.php';
     require_once '../../classes/tag.php';
     require_once '../../classes/student.php';
     require_once '../../classes/teacher.php';
-    require_once '../../classes/category.php';
+    require_once '../../classes/Categorie.php';
+    require_once '../../classes/DocumentCourse.php';
+    require_once '../../classes/User.php';
 
-    $cours = new Course('','','','','','','');
+    $cours = new DocumentCourse('', '', '', '', 'pdf', 0, '', '');
     $tg = new Tag('');
     $etudiant = new Student('','','','','','','','');
 
@@ -18,25 +21,16 @@
         } else if ($_SESSION['role'] === 'Enseignant') {
             header("Location: ../teacher/dashboard.php");
         } else {
-            header("Location: ../guest");
-        }
-        exit;
-    }
-
-    if($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if(isset($_POST['disconnect'])) {
             session_unset();
             session_destroy();
             header("Location: ../guest");
-            exit();
+            exit;
         }
     }
 
     $etd = $_SESSION['id_user'];
-
     $courses = $etudiant->subscribedCourses($etd);
 ?>
-
 
 
 <!DOCTYPE html>
@@ -101,14 +95,15 @@
         <?php 
             if (is_array($courses)) {
                 foreach ($courses as $course) {
-                    $cour = new Course(
-                        $course['titre'],
-                        $course['description'],
-                        $course['couverture'],
-                        $course['contenu'],
-                        $course['video'],
-                        $course['statut_cours'],
-                        $course['niveau']
+                    $cour = new DocumentCourse(
+                        $course['titre'] ?? '',
+                        $course['description'] ?? '',
+                        $course['couverture'] ?? '',
+                        $course['contenu'] ?? '',
+                        $course['format_document'] ?? 'pdf',
+                        intval($course['taille'] ?? 0),
+                        $course['statut_cours'] ?? '',
+                        $course['niveau'] ?? ''
                     );
 
                     $teacher = new Teacher(
@@ -128,7 +123,6 @@
                         ''
                     );
             ?>
-
             <div class="course-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
                 <div class="relative">
                     <img src="../../uploads/<?php echo htmlspecialchars($cour->getCouverture()); ?>" alt="Course" class="w-full h-48 object-cover">
@@ -168,8 +162,7 @@
         </section>
     </main>
 
-    <?php include_once '../../includes/footer.php'; ?>
-
+    <?php include '../../includes/footer.php'; ?>
 
     <script src="../../assets/js/main.js"></script>
 </body>

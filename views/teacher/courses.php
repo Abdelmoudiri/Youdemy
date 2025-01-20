@@ -7,7 +7,6 @@ require_once "../../classes/Categorie.php";
 require_once "../../classes/DocumentCourse.php";
 require_once "../../classes/Tag.php";
 
-
 $enseignant = new Teacher(
     (int)$_SESSION['id_user'],
     $_SESSION['nom'],
@@ -21,6 +20,110 @@ $enseignant = new Teacher(
 );
 
 $new_cour = new DocumentCourse('', '', '', '', '', 0, 'En Attente', 'Facile');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['disconnect'])) {
+        session_unset();
+        session_destroy();
+        header("Location: ../guest");
+        exit;
+    }
+
+    if (isset($_POST['titre']) && isset($_POST['description']) && isset($_FILES['couverture']) && isset($_FILES['pdf_file'])) {
+        try {
+            if ($_FILES['couverture']['error'] !== UPLOAD_ERR_OK || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
+                throw new Exception("Erreur lors du téléchargement des fichiers");
+            }
+
+            $cover_extension = pathinfo($_FILES['couverture']['name'], PATHINFO_EXTENSION);
+            $pdf_extension = pathinfo($_FILES['pdf_file']['name'], PATHINFO_EXTENSION);
+            $unique_prefix = uniqid();
+            $cover_filename = $unique_prefix . '_cover.' . $cover_extension;
+            $pdf_filename = $unique_prefix . '_document.' . $pdf_extension;
+
+            $upload_path = '../../uploads/';
+            if (!file_exists($upload_path)) {
+                mkdir($upload_path, 0777, true);
+            }
+
+            if (!move_uploaded_file($_FILES['couverture']['tmp_name'], $upload_path . $cover_filename)) {
+                throw new Exception("Erreur lors du déplacement de l'image de couverture");
+            }
+            if (!move_uploaded_file($_FILES['pdf_file']['tmp_name'], $upload_path . $pdf_filename)) {
+                throw new Exception("Erreur lors du déplacement du fichier PDF");
+            }
+
+            $new_course = new DocumentCourse(
+                htmlspecialchars($_POST['titre']),
+                htmlspecialchars($_POST['description']),
+                $cover_filename,
+                $pdf_filename,
+                'pdf',
+                $_FILES['pdf_file']['size'],
+                'En Attente',
+                'Facile'
+            );
+
+            error_log("Tentative de création du cours avec les paramètres : " . print_r([
+                'titre' => $_POST['titre'],
+                'description' => $_POST['description'],
+                'couverture' => $cover_filename,
+                'contenu' => $pdf_filename,
+                'taille' => $_FILES['pdf_file']['size'],
+                'id_teacher' => $enseignant->getId()
+            ], true));
+
+            try {
+                $result = $new_course->create($enseignant->getId());
+                
+                if($result) {
+                    // Ajouter la catégorie
+                    if(isset($_POST['categorie']) && !empty($_POST['categorie'])) {
+                        $categorie = new Categorie();
+                        $categorie->addCourseCategory($result, $_POST['categorie']);
+                    }
+
+                    // Ajouter les tags
+                    if(isset($_POST['tags']) && is_array($_POST['tags'])) {
+                        $tag = new Tag('');
+                        foreach($_POST['tags'] as $tag_id) {
+                            $tag->addCourseTag($result, $tag_id);
+                        }
+                    }
+
+                    $_SESSION['success_message'] = 'Cours ajouté avec succès !';
+                    error_log("Cours créé avec succès. ID: " . $result);
+                } else {
+                    throw new Exception("La création du cours a échoué. Vérifiez les logs pour plus de détails.");
+                }
+            } catch (Exception $e) {
+                // Supprimer les fichiers uploadés en cas d'erreur
+                @unlink($upload_path . $cover_filename);
+                @unlink($upload_path . $pdf_filename);
+                throw $e;
+            }
+            
+            header('Location: courses.php');
+            exit();
+
+        } catch (Exception $e) {
+            error_log("Exception lors de la création du cours : " . $e->getMessage());
+            $_SESSION['error_message'] = 'Erreur : ' . $e->getMessage();
+            header('Location: courses.php');
+            exit();
+        }
+    }
+
+    if (isset($_POST["delete"])) {
+        $course = $_POST['course'];
+        $delete = $new_cour->deleteCourse($course);
+        if ($delete) {
+            echo '<script>alert("Cours Supprimé avec Succés !")</script>';
+        } else {
+            echo '<script>alert("Cours Non Supprimé !")</script>';
+        }
+    }
+}
 
 // Récupérer les catégories et tags disponibles
 $categorie = new Categorie();
@@ -38,24 +141,6 @@ if ($_SESSION['role'] !== 'Enseignant') {
         header("Location: ../guest");
     }
     exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['disconnect'])) {
-        session_unset();
-        session_destroy();
-        header("Location: ../guest");
-        exit;
-    }
-    if (isset($_POST["delete"])) {
-        $course = $_POST['course'];
-        $delete = $new_cour->deleteCourse($course);
-        if ($delete) {
-            echo '<script>alert("Cours Supprimé avec Succés !")</script>';
-        } else {
-            echo '<script>alert("Cours Non Supprimé !")</script>';
-        }
-    }
 }
 
 ?>
@@ -81,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fa-solid fa-bars text-2xl cursor-pointer md:hidden"></i>
                 </div>
                 <a href="dashboard.php">
-                    <img src="../../assets/images/logo.png" alt="logo" class="w-40">
+                    <img src="../../assets/img/logo.png" alt="logo" class="w-20">
                 </a>
             </div>
             <div id="links" class="fixed md:static left-[-500px] top-0 bottom-0 duration-500 bg-white md:bg-transparent shadow-lg md:shadow-none w-[250px] md:w-auto z-[1000]">
@@ -147,6 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <form class="sm:flex sm:items-center">
                     <input class="inline w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-3 leading-5 placeholder-gray-500 focus:border-indigo-500 focus:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm" placeholder="Rechercher un Cours .." type="search">
                     <button type="submit" class="mt-3 inline-flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Rechercher un cours
                     </button>
                 </form>
             </div>
@@ -161,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <form action="dashboard.php" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form action="courses.php" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Titre du cours</label>
                         <input type="text" name="titre" required 

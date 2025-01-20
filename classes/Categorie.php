@@ -8,17 +8,31 @@ class Categorie {
     private $nom;
     private $description;
 
-    public function __construct() {
+    public function __construct($nom = '', $description = '') {
         $this->database = Database::getInstance()->getConnection();
+        $this->nom = $nom;
+        $this->description = $description;
     }
 
     public function getName() {
         return $this->nom;
     }
 
+    public function getDescription() {
+        return $this->description;
+    }
+
+    public function setName($nom) {
+        $this->nom = $nom;
+    }
+
+    public function setDescription($description) {
+        $this->description = $description;
+    }
+
     public function loadById($id) {
         try {
-            $query = "SELECT * FROM categories WHERE id_categorie = ?";
+            $query = "SELECT id_categorie, nom_categorie, description FROM categories WHERE id_categorie = ?";
             $stmt = $this->database->prepare($query);
             $stmt->execute([$id]);
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -39,9 +53,9 @@ class Categorie {
         try {
             $query = "SELECT 
                         c.id_categorie,
-                        c.nom_categorie,
-                        c.description as description_categorie,
-                        COUNT(CASE WHEN co.statut_cours = ? THEN 1 END) as total_approved_courses
+                        c.nom_categorie as categorie,
+                        c.description,
+                        COUNT(CASE WHEN co.statut = ? THEN 1 END) as total_approved_courses
                     FROM categories c
                     LEFT JOIN courses co ON c.id_categorie = co.id_categorie
                     GROUP BY c.id_categorie, c.nom_categorie, c.description
@@ -50,8 +64,9 @@ class Categorie {
             $stmt = $this->database->prepare($query);
             $stmt->execute([$status]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            die("Erreur lors de la récupération des catégories : " . $e->getMessage());
+        } catch(PDOException $e) {
+            error_log("Erreur dans getCoursesPerCategory: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -87,19 +102,19 @@ class Categorie {
 
     public function getAllCategories() {
         try {
-            $query = "SELECT * FROM categories ORDER BY nom_categorie";
-            $stmt = $this->database->prepare($query);
+            $sql = "SELECT id_categorie, nom_categorie, description FROM categories ORDER BY nom_categorie";
+            $stmt = $this->database->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            throw new Exception("Erreur lors de la récupération des catégories : " . $e->getMessage());
+        } catch(PDOException $e) {
+            error_log("Erreur lors de la récupération des catégories : " . $e->getMessage());
             return [];
         }
     }
 
     public function addCourseCategory($courseId, $categoryId) {
         try {
-            $query = "INSERT INTO cours_categories (id_cours, id_categorie) VALUES (?, ?)";
+            $query = "INSERT INTO courses_categories (id_course, id_categorie) VALUES (?, ?)";
             $stmt = $this->database->prepare($query);
             return $stmt->execute([$courseId, $categoryId]);
         } catch (PDOException $e) {

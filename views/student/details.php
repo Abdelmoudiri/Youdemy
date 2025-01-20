@@ -1,16 +1,23 @@
 <?php
-
     session_start();
 
+    require_once '../../config/db.php';
     require_once '../../classes/course.php';
     require_once '../../classes/tag.php';
     require_once '../../classes/student.php';
     require_once '../../classes/teacher.php';
-    require_once '../../classes/category.php';
+    require_once '../../classes/Categorie.php';
+    require_once '../../classes/DocumentCourse.php';
+    require_once '../../classes/User.php';
 
-    $cours = new Course('','','','','','','');
+    if (!isset($_GET['id'])) {
+        header('Location: courses.php');
+        exit;
+    }
+
+    $courseId = $_GET['id'];
+    $etudiant = new Student('','','','','','','', $_SESSION['id_user']);
     $tg = new Tag('');
-    $etudiant = new Student('','','','','','','','');
 
     if ($_SESSION['role'] !== 'Etudiant') {
         if ($_SESSION['role'] === 'Admin') {
@@ -18,162 +25,134 @@
         } else if ($_SESSION['role'] === 'Enseignant') {
             header("Location: ../teacher/dashboard.php");
         } else {
+            session_unset();
+            session_destroy();
             header("Location: ../guest");
+            exit;
         }
+    }
+
+    // Récupérer les détails du cours
+    $course = $etudiant->getCourseDetails($courseId);
+    if (!$course) {
+        header('Location: courses.php');
         exit;
     }
 
-    if(isset($_GET['id'])){
-        $id_course = $_GET['id'];
-        $course = $cours->getCourse($id_course);
-    }
-
+    // Créer une instance de DocumentCourse avec les détails du cours
+    $cour = new DocumentCourse(
+        $course['titre'] ?? '',
+        $course['description'] ?? '',
+        $course['couverture'] ?? '',
+        $course['contenu'] ?? '',
+        $course['format_document'] ?? 'pdf',
+        intval($course['taille'] ?? 0),
+        $course['statut_cours'] ?? '',
+        $course['niveau'] ?? ''
+    );
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youdemy</title>
-    <link rel="icon" href="../../assets/img/logo.png">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <title><?php echo htmlspecialchars($course['titre']); ?> - YouDemy</title>
+    <link href="../../assets/css/style.css" rel="stylesheet">
+    <link href="../../assets/css/custom.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 text-gray-900">
-    <section class="container mx-auto px-4 py-12 max-w-4xl">
-        <!-- Course Header -->
-        <header class="text-center mb-12">
-            <?php
-                    $cour = new Course(
-                        $course['titre'],
-                        $course['description'],
-                        $course['couverture'],
-                        $course['contenu'],
-                        $course['video'],
-                        $course['statut_cours'],
-                        $course['niveau']
-                    );
+<body>
+    <header>
+        <?php include_once '../../includes/navbar_student.php'; ?>
+    </header>
 
-                    $teacher = new Teacher(
-                        0,
-                        $course['nom'],
-                        $course['prenom'],
-                        '',
-                        '',
-                        '',
-                        '',
-                        '',
-                        $course['photo']
-                    );
-
-                    $ctg = new Categorie(
-                        $course['nom_categorie'],
-                        ''
-                    );
-            ?>
-
-            
-            <a href="../student/" class="flex items-center justify-center gap-1 mb-10">
-                <img class="w-14" src="../../assets/img/logo.png" alt="Logo de Youdemy Plateforme">
-                <h1 class="text-2xl font-semibold">You<span class="text-blue-800">Demy</span></h1>
-            </a>
-            <div class="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-4 py-2 rounded-full inline-block mb-4">
-                <span class="font-semibold"><?php echo $ctg->getName() ?></span>
-            </div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                <?php echo $cour->getTitre() ?>
-            </h1>
-            
-            <!-- Instructor and Publication Info -->
-            <div class="flex justify-center items-center space-x-6 text-gray-600">
-                <div class="flex items-center space-x-3">
-                    <img src="../../uploads/<?php echo $teacher->getPhoto() ?>" 
-                         alt="Professeur" 
-                         class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md">
-                    <div>
-                        <p class="font-semibold text-gray-800"><?php echo $teacher->getPrenom().' '.$teacher->getNom() ?></p>
+    <main class="pb-10 pt-24 px-5">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="relative h-64">
+                    <img src="../../uploads/<?php echo htmlspecialchars($course['couverture']); ?>" 
+                         alt="<?php echo htmlspecialchars($course['titre']); ?>"
+                         class="w-full h-full object-cover">
+                    <div class="absolute top-0 right-0 mt-4 mr-4">
+                        <span class="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                            <?php echo htmlspecialchars($course['niveau']); ?>
+                        </span>
                     </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <i data-feather="calendar" class="w-5 h-5"></i>
-                    <span class="text-sm"><?php echo $course['date_publication'] ?></span>
+
+                <div class="p-6">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                        <?php echo htmlspecialchars($course['titre']); ?>
+                    </h1>
+
+                    <div class="flex items-center mb-6">
+                        <img src="../../uploads/<?php echo htmlspecialchars($course['photo']); ?>" 
+                             alt="<?php echo htmlspecialchars($course['prenom'] . ' ' . $course['nom']); ?>"
+                             class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <p class="font-medium text-gray-900">
+                                <?php echo htmlspecialchars($course['prenom'] . ' ' . $course['nom']); ?>
+                            </p>
+                            <p class="text-sm text-gray-500">Enseignant</p>
+                        </div>
+                    </div>
+
+                    <div class="prose max-w-none mb-6">
+                        <h2 class="text-xl font-semibold mb-2">Description</h2>
+                        <p class="text-gray-600">
+                            <?php echo nl2br(htmlspecialchars($course['description'])); ?>
+                        </p>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-2">Catégorie</h2>
+                        <span class="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full">
+                            <?php echo htmlspecialchars($course['nom_categorie']); ?>
+                        </span>
+                    </div>
+
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold mb-2">Tags</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <?php 
+                            $tags = $tg->showCourseTags($courseId);
+                            if (!empty($tags)) {
+                                foreach ($tags as $tag) {
+                                    echo '<span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">' . 
+                                         htmlspecialchars($tag['nom_tag']) . 
+                                         '</span>';
+                                }
+                            } else {
+                                echo '<p class="text-gray-500">Aucun tag associé à ce cours</p>';
+                            }
+                            ?>
+                        </div>
+                    </div>
+
+                    <?php if ($etudiant->isEnrolled($_SESSION['id_user'], $courseId)) { ?>
+                        <div class="bg-green-100 text-green-800 px-4 py-2 rounded mb-4">
+                            Vous êtes déjà inscrit à ce cours
+                        </div>
+                        <a href="view_course.php?id=<?php echo $courseId; ?>" 
+                           class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            Accéder au cours
+                        </a>
+                    <?php } else { ?>
+                        <form action="enroll_course.php" method="POST" class="mt-6">
+                            <input type="hidden" name="course_id" value="<?php echo $courseId; ?>">
+                            <button type="submit" name="enroll" 
+                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                S'inscrire au cours
+                            </button>
+                        </form>
+                    <?php } ?>
                 </div>
             </div>
-        </header>
-
-        <!-- Course Cover Image -->
-        <div class="mb-12 rounded-2xl overflow-hidden shadow-2xl">
-            <img src="../../uploads/<?php echo $cour->getCouverture() ?>" 
-                 alt="Course Cover" 
-                 class="w-full h-[500px] object-cover">
         </div>
+    </main>
 
-        <!-- Course Overview -->
-        <section class="bg-white shadow-lg rounded-xl p-8 mb-12">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6 border-b-2 border-purple-500 pb-4">
-                Description du Cours
-            </h2>
-            <p class="text-gray-700 leading-relaxed mb-6">
-                <?php echo $cour->getDescription() ?>
-            </p>
-        </section>
+    <?php include '../../includes/footer.php'; ?>
 
-        <!-- Detailed Course Modules -->
-        <section class="bg-white shadow-lg rounded-xl p-8 mb-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-purple-500 pb-4">
-                Contenu Détaillé du Cours
-            </h2>
-
-            <!-- Text  -->
-            <?php if($cour->getContenu() != NULL){ ?>
-            <div class="flex justify-between items-center mb-4">
-                <a href="<?php echo $cour->getContenu() ?>" target="_blank" class="text-purple-500 hover:underline">
-                    Voir en plein écran
-                </a>
-            </div>
-            <div class="mb-10">
-                <iframe src="<?php echo $cour->getContenu() ?>" 
-                        width="100%" 
-                        height="600" 
-                        frameborder="0" 
-                        allowfullscreen>
-                </iframe>
-            </div>
-
-            <?php }else{ ?>
-            
-            <div class="mb-10">
-                <video class="w-full" src="../../uploads/<?php echo $cour->getVideo() ?>" controls>
-
-                </video>
-            </div>
-            
-            <?php }?>
-        </section>
-
-        <!-- Tags -->
-        <section class="bg-white shadow-lg rounded-xl p-6">
-            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Mots-clés</h3>
-            <div class="flex flex-wrap gap-2">
-                <?php 
-                $tags = $tg->showCourseTags($course['id_course']);
-                foreach ($tags as $tag) {
-                    $tg->setNom($tag['nom_tag']) ?>
-                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"><?php echo $tg->getNom() ?></span>
-                <?php } ?>
-            </div>
-        </section>
-        
-    </section>
-
-    <script>
-        // Initialize Feather Icons
-        feather.replace();
-    </script>
+    <script src="../../assets/js/main.js"></script>
 </body>
 </html>

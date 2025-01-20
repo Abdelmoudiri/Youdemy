@@ -127,7 +127,7 @@
 
         public function addCourseTag($courseId, $tagId) {
             try {
-                $query = "INSERT INTO cours_tags (id_cours, id_tag) VALUES (?, ?)";
+                $query = "INSERT INTO courses_tags (id_course, id_tag) VALUES (?, ?)";
                 $stmt = $this->database->prepare($query);
                 return $stmt->execute([$courseId, $tagId]);
             } catch (PDOException $e) {

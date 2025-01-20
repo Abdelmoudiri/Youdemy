@@ -117,15 +117,21 @@ class User {
             $query = "SELECT u.*, r.label as role 
                      FROM users u 
                      JOIN roles r ON u.id_role = r.id_role 
-                     WHERE u.email = :email AND u.statut = 'Actif'";
+                     WHERE u.email = :email";
             
             $stmt = $this->database->prepare($query);
             $stmt->bindValue(':email', $email, PDO::PARAM_STR);
             $stmt->execute();
             
+            error_log("Login attempt for email: " . $email);
+            
             if ($stmt->rowCount() > 0) {
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                error_log("Found user with password hash: " . $user['password']);
+                error_log("Attempting to verify password");
+                
                 if (password_verify($password, $user['password'])) {
+                    error_log("Password verified successfully");
                     return [
                         'success' => true,
                         'user' => [
@@ -137,7 +143,11 @@ class User {
                             'photo' => $user['photo']
                         ]
                     ];
+                } else {
+                    error_log("Password verification failed");
                 }
+            } else {
+                error_log("No user found with this email");
             }
             
             return [
@@ -146,6 +156,7 @@ class User {
             ];
             
         } catch (Exception $e) {
+            error_log("Login error: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => $e->getMessage()
@@ -154,40 +165,48 @@ class User {
     }
 
     // REGISTER METHOD
-    public function register() {
+    public function register($nom, $prenom, $telephone, $email, $password, $role) {
         try {
-            // Vérifier si l'email existe déjà
-            $query = "SELECT COUNT(*) FROM users WHERE email = :email";
+            error_log("Starting registration for email: " . $email);
+            
+            $query = "SELECT * FROM users WHERE email = :email";
             $stmt = $this->database->prepare($query);
-            $stmt->bindValue(':email', $this->email, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email);
             $stmt->execute();
             
-            if ($stmt->fetchColumn() > 0) {
-                echo '<script>alert("Cet email est déjà utilisé")</script>';
+            if ($stmt->rowCount() > 0) {
+                error_log("Email already exists");
+                echo '<script>alert("Email déjà utilisé !")</script>';
                 return false;
             }
 
-            // Insérer le nouvel utilisateur
-            $query = "INSERT INTO users (prenom, nom, phone, email, password, photo, statut, id_role) 
-                     VALUES (:prenom, :nom, :phone, :email, :password, :photo, :statut, :role)";
-            
+            $query = "INSERT INTO users (nom, prenom, phone, email, password, id_role, statut) VALUES (:nom, :prenom, :phone, :email, :password, :role, 'Actif')";
             $stmt = $this->database->prepare($query);
-            $stmt->bindValue(':prenom', $this->prenom, PDO::PARAM_STR);
-            $stmt->bindValue(':nom', $this->nom, PDO::PARAM_STR);
-            $stmt->bindValue(':phone', $this->telephone, PDO::PARAM_STR);
-            $stmt->bindValue(':email', $this->email, PDO::PARAM_STR);
-            $stmt->bindValue(':password', $this->password, PDO::PARAM_STR);
-            $stmt->bindValue(':photo', $this->photo, PDO::PARAM_STR);
-            $stmt->bindValue(':role', $this->role, PDO::PARAM_INT);
             
-            if($this->role == 2) {
-                $stmt->bindValue(':statut', 'Actif', PDO::PARAM_STR);
-            } else {
-                $stmt->bindValue(':statut', 'En Attente', PDO::PARAM_STR);
+            // Récupérer l'ID du rôle
+            $roleId = 2; // Par défaut, rôle étudiant
+            if ($role === 'Enseignant') {
+                $roleId = 3;
             }
+
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            error_log("Password hash created: " . $hashedPassword);
             
-            return $stmt->execute();
+            $stmt->bindParam(':nom', $nom);
+            $stmt->bindParam(':prenom', $prenom);
+            $stmt->bindParam(':phone', $telephone);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':password', $hashedPassword);
+            $stmt->bindParam(':role', $roleId);
+            
+            if ($stmt->execute()) {
+                error_log("User registered successfully");
+                return true;
+            }
+            error_log("Registration failed");
+            return false;
         } catch(PDOException $e) {
+            error_log("Registration error: " . $e->getMessage());
             echo '<script>alert("Erreur lors de l\'inscription : ' . $e->getMessage() . '")</script>';
             return false;
         }

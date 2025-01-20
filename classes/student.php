@@ -1,34 +1,46 @@
 <?php
 
     require_once __DIR__ . '/User.php';
+    require_once __DIR__ . '/../config/db.php';
 
     class Student extends User {
-
+        protected $database;
+        protected $id_user;
 
         public function __construct($nom,$prenom,$telephone,$email,$password,$role,$status,$photo) {
-            parent::__construct( $nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
+            parent::__construct($nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
+            $this->database = Database::getInstance()->getConnection();
         }
 
         // SUBSCRIBE TO A COURSE
-        public function subscribeToCourse($student,$course){
+        /**
+         * Subscribe to a course
+         *
+         * @param int $student_id
+         * @param int $course_id
+         * @return bool
+         */
+        public function subscribeToCourse($student_id, $course_id){
             try{
-                $sql = 'INSERT INTO enrollments(id_course,id_student)
-                        VALUES (:course,:student)';
+                $sql = 'INSERT INTO enrollments(id_course, id_student)
+                        VALUES (:course, :student)';
                 $query = $this->database->prepare($sql);
-                $query->bindParam(':student', $student, PDO::PARAM_INT);
-                $query->bindParam(':course', $course, PDO::PARAM_INT);
-                if($query->execute()){
-                    return true;
-                }else{
-                    return false;
-                }
+                $query->bindParam(':student', $student_id, PDO::PARAM_INT);
+                $query->bindParam(':course', $course_id, PDO::PARAM_INT);
+                return $query->execute();
             }catch(PDOException $e){
-                throw new Exception('Erreur lors de l\'Inscription à ce cours : ' .$e->getMessage());
+                error_log("Erreur d'inscription au cours : " . $e->getMessage());
+                return false;
             }
         }
         
-        
         // GET SUBSCRIBED COURSES
+        /**
+         * Get subscribed courses
+         *
+         * @param int $student
+         * @return array
+         */
         public function subscribedCourses($student) {
             try {
                 $sql = 'SELECT 
@@ -62,9 +74,14 @@
         }
 
         // Get total number of students
+        /**
+         * Get total number of students
+         *
+         * @return int
+         */
         public function getTotalStudents() {
             try {
-                $stmt = $this->connect()->query("SELECT COUNT(*) as total FROM users WHERE role = 'student'");
+                $stmt = $this->database->query("SELECT COUNT(*) as total FROM users WHERE role = 'student'");
                 $result = $stmt->fetch();
                 return $result['total'];
             } catch(PDOException $e) {
@@ -73,6 +90,11 @@
         }
 
         // Get all students with their enrolled courses count
+        /**
+         * Get all students with their enrolled courses count
+         *
+         * @return array
+         */
         public function getAllStudents() {
             try {
                 $query = "SELECT u.id_user as id, 
@@ -86,7 +108,7 @@
                          WHERE u.role = 'student'
                          GROUP BY u.id_user";
                 
-                $stmt = $this->connect()->query($query);
+                $stmt = $this->database->query($query);
                 $students = $stmt->fetchAll();
                 
                 // Format the data
@@ -102,12 +124,67 @@
         }
 
         // Enroll student in a course
+        /**
+         * Enroll student in a course
+         *
+         * @param int $courseId
+         * @return bool
+         */
         public function enrollCourse($courseId) {
             try {
-                $query = "INSERT INTO enrollments (id_student, id_course, enrollment_date) VALUES (?, ?, NOW())";
-                $stmt = $this->connect()->prepare($query);
-                return $stmt->execute([$this->id, $courseId]);
+                $query = "INSERT INTO enrollments (id_student, id_course, enrollment_date) VALUES (:student, :course, NOW())";
+                $stmt = $this->database->prepare($query);
+                $stmt->bindParam(':student', $this->id_user, PDO::PARAM_INT);
+                $stmt->bindParam(':course', $courseId, PDO::PARAM_INT);
+                return $stmt->execute();
             } catch(PDOException $e) {
+                error_log("Erreur lors de l'inscription au cours : " . $e->getMessage());
+                return false;
+            }
+        }
+
+        // Get course details
+        /**
+         * Get course details
+         *
+         * @param int $courseId
+         * @return array|null
+         */
+        public function getCourseDetails($courseId) {
+            try {
+                $sql = "SELECT c.*, u.nom, u.prenom, u.photo, cat.nom_categorie 
+                        FROM courses c 
+                        JOIN users u ON c.id_user = u.id_user 
+                        LEFT JOIN categories cat ON c.id_categorie = cat.id_categorie 
+                        WHERE c.id_course = :courseId";
+                $stmt = $this->database->prepare($sql);
+                $stmt->bindParam(':courseId', $courseId, PDO::PARAM_INT);
+                $stmt->execute();
+                return $stmt->fetch(PDO::FETCH_ASSOC);
+            } catch(PDOException $e) {
+                error_log("Erreur lors de la récupération des détails du cours : " . $e->getMessage());
+                return null;
+            }
+        }
+
+        // Check if student is enrolled in a course
+        /**
+         * Check if student is enrolled in a course
+         *
+         * @param int $studentId
+         * @param int $courseId
+         * @return bool
+         */
+        public function isEnrolled($studentId, $courseId) {
+            try {
+                $sql = "SELECT COUNT(*) FROM inscription WHERE id_student = :studentId AND id_course = :courseId";
+                $stmt = $this->database->prepare($sql);
+                $stmt->bindParam(':studentId', $studentId, PDO::PARAM_INT);
+                $stmt->bindParam(':courseId', $courseId, PDO::PARAM_INT);
+                $stmt->execute();
+                return $stmt->fetchColumn() > 0;
+            } catch(PDOException $e) {
+                error_log("Erreur lors de la vérification de l'inscription : " . $e->getMessage());
                 return false;
             }
         }

@@ -2,15 +2,27 @@
 
     session_start();
 
-    require_once '../../classes/course.php';
-    require_once '../../classes/tag.php';
-    require_once '../../classes/student.php';
-    require_once '../../classes/teacher.php';
-    require_once '../../classes/category.php';
+    require_once "../../config/db.php";
+    require_once "../../config/validator.php";
+    require_once "../../classes/student.php";
+    require_once "../../classes/course.php";
+    require_once "../../classes/DocumentCourse.php";
+    require_once "../../classes/teacher.php";
+    require_once "../../classes/user.php";
+    require_once "../../classes/Categorie.php";
 
-    $cours = new Course('','','','','','','');
-    $tg = new Tag('');
-    $etudiant = new Student('','','','','','','','');
+    $cours = new DocumentCourse();
+    $category = new Categorie();
+    $student = new Student(
+        $_SESSION['nom'] ?? '',
+        $_SESSION['prenom'] ?? '',
+        $_SESSION['phone'] ?? '',
+        $_SESSION['email'] ?? '',
+        '',  // pas besoin de mot de passe pour l'instance
+        'Etudiant',
+        'Actif',
+        $_SESSION['photo'] ?? 'user.png'
+    );
 
     if ($_SESSION['role'] !== 'Etudiant') {
         if ($_SESSION['role'] === 'Admin') {
@@ -32,39 +44,41 @@
         }
         else if(isset($_POST['subscribe'])) {
             try {
-                $course = $_POST['id_course'];
-                $student = $_SESSION['id_user'];
-                $subscribe = $etudiant->subscribeToCourse($student, $course);
+                $course_id = $_POST['id_course'];
+                $student_id = $_SESSION['id_user'];
+                $subscribe = $student->subscribeToCourse($student_id, $course_id);
                 if ($subscribe) {
                     header('Location: ./my_courses.php');
                     exit();
-                } else {
-                    echo '<script>alert("Erreur lors de l\'inscription à ce cours !");</script>';
                 }
-            } catch (Exception $e) {
-                echo '<script>alert("Une erreur est survenue : ' . $e->getMessage() . '");</script>';
+            } catch(Exception $e) {
+                echo '<script>alert("' . $e->getMessage() . '")</script>';
             }
         }
     }
 
     $id_etudiant = $_SESSION['id_user'];
-
     $limit = 3;
 
     if(isset($_GET['page'])){
-        $page = (int)$_GET['page'];
+        $page = $_GET['page'];
     }else{
         $page = 1;
     }
 
-    $depart = ($page - 1) * $limit;
+    $offset = ($page - 1) * $limit;
 
-    $courses = $cours->getUnsubscribedCourses($id_etudiant,'Approuvé', $limit, $depart);
+    if(isset($_GET['category'])) {
+        $category_name = $_GET['category'];
+        $courses = $cours->getCoursesByCategory($category_name, $limit, $offset);
+        $totalCourses = $cours->getTotalCoursesByCategory($category_name);
+    } else {
+        $courses = $cours->getAllCourses($limit, $offset);
+        $totalCourses = $cours->getTotalCourses();
+    }
 
-    $totalCourses = $cours->countUnsubscribedCourses($id_etudiant,'Approuvé');
     $totalPages = ceil($totalCourses / $limit);
 ?>
-
 
 
 <!DOCTYPE html>
@@ -141,30 +155,31 @@
             <?php 
             if (is_array($courses)) {
                 foreach ($courses as $course) {
-                    $cour = new Course(
-                        $course['titre'],
-                        $course['description'],
-                        $course['couverture'],
-                        $course['contenu'],
-                        $course['video'],
-                        $course['statut_cours'],
-                        $course['niveau']
+                    $cour = new DocumentCourse(
+                        $course['titre'] ?? '',
+                        $course['description'] ?? '',
+                        $course['couverture'] ?? '',
+                        $course['contenu'] ?? '',
+                        $course['format_document'] ?? 'pdf',
+                        $course['taille'] ?? 0,
+                        $course['statut_cours'] ?? 'En Attente',
+                        $course['niveau'] ?? 'Débutant'
                     );
 
                     $teacher = new Teacher(
                         0,
-                        $course['nom'],
-                        $course['prenom'],
+                        $course['nom'] ?? '',
+                        $course['prenom'] ?? '',
                         '',
                         '',
                         '',
                         '',
                         '',
-                        $course['photo']
+                        $course['photo'] ?? 'user.png'
                     );
 
                     $ctg = new Categorie(
-                        $course['categorie'],
+                        $course['categorie'] ?? '',
                         ''
                     );
             ?>
@@ -177,14 +192,6 @@
                         <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs"><?php echo htmlspecialchars($ctg->getName()); ?></span>
                         <span class="ml-2 text-gray-500 text-sm">•</span>
                         <span class="ml-2 text-gray-500 text-sm"><?php echo htmlspecialchars($cour->getNiveau()); ?></span>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3 py-2">
-                        <?php 
-                        $tags = $tg->showCourseTags($course['id_course']);
-                        foreach ($tags as $tag) {
-                            $tg->setNom($tag['nom_tag']) ?>
-                            <span class="text-white bg-blue-500 px-2 text-xs rounded-full"># <?php echo htmlspecialchars($tg->getNom()) ?></span>
-                        <?php } ?>
                     </div>
                     <h3 class="text-xl font-bold mb-2"><?php echo htmlspecialchars($cour->getTitre()); ?></h3>
                     <p class="text-gray-600 mb-4 line-clamp-2"><?php echo htmlspecialchars($cour->getDescription()); ?></p>
@@ -214,7 +221,6 @@
             <?php if ($page > 1): ?>
                 <a href="?page=<?php echo $page - 1; ?>" class="px-4 py-2 bg-blue-600 text-white rounded-lg mr-2 hover:bg-blue-800">Précédent</a>
             <?php endif; ?>
-
             <?php if ($page < $totalPages): ?>
                 <a href="?page=<?php echo $page + 1; ?>" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-800">Suivant</a>
             <?php endif; ?>
@@ -222,7 +228,6 @@
     </main>
 
     <?php include_once '../../includes/footer.php'; ?>
-
 
     <script src="../../assets/js/main.js"></script>
 </body>

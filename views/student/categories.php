@@ -1,9 +1,13 @@
 <?php
     session_start();
 
-    require_once '../../classes/category.php';
+    require_once "../../config/db.php";
+    require_once "../../classes/student.php";
+    require_once "../../classes/Categorie.php";
+    require_once "../../classes/course.php";
 
-    $category = new Categorie('','');
+    $category = new Categorie();
+    $categories = $category->getAllCategories();
 
     if ($_SESSION['role'] !== 'Etudiant') {
         if ($_SESSION['role'] === 'Admin') {
@@ -11,9 +15,11 @@
         } else if ($_SESSION['role'] === 'Enseignant') {
             header("Location: ../teacher/dashboard.php");
         } else {
+            session_unset();
+            session_destroy();
             header("Location: ../guest");
+            exit;
         }
-        exit;
     }
 
     if($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -21,7 +27,7 @@
             session_unset();
             session_destroy();
             header("Location: ../guest");
-            exit();
+            exit;
         }
     }
 
@@ -32,7 +38,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youdemy</title>
+    <title>Catégories - YouDemy</title>
     <link rel="icon" href="../../assets/img/logo.png">
     <link rel="stylesheet" href="../../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -85,61 +91,38 @@
     </header>
 
     <main class="px-5 py-10">
-        <section class="md:grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            
-            <?php
-            
-            $categories = $category->getCoursesPerCategory('Approuvé');
-            $color = ['blue-600','red-600','green-600','orange-600','purple-600','gray-600','rose-600', 'black'];
+        <section class="mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Catégories</h1>
+            <p class="text-gray-600 text-lg">Découvrez nos différentes catégories de cours.</p>
+        </section>
 
-            $index = 0;
-
-            if(is_array($categories)){
-                foreach($categories as $categorie) {
-                    $category->setName($categorie['categorie']);
-                    $category->setDescription($categorie['description']);
-                    $courses = $categorie['total_approved_courses'];
-                    if($courses){ ?>
-
-                    <div class="category-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                    <div class="relative h-48 bg-<?php echo $color[$index]; ?>">
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="text-white text-3xl"><?php echo $courses; ?> Cours</i>
-                        </div>
-                    </div>
+        <section class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <?php 
+                if (empty($categories)) {
+                    echo '<div class="col-span-full text-center py-10">
+                            <p class="text-gray-600 text-lg">Aucune catégorie n\'est disponible pour le moment.</p>
+                          </div>';
+                } else {
+                    foreach ($categories as $cat) {
+            ?>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300">
                     <div class="p-6">
-                        <h3 class="text-2xl font-bold mb-2"><?php echo $category->getName(); ?></h3>
-                        <p class="text-gray-600 mb-4"><?php echo $category->getDescription(); ?></p>
-                        <a href="courses.php" class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                            Explorer les cours
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">
+                            <?php echo htmlspecialchars($cat['nom_categorie']); ?>
+                        </h3>
+                        <p class="text-gray-600 mb-4">
+                            <?php echo htmlspecialchars($cat['description'] ?? 'Aucune description disponible'); ?>
+                        </p>
+                        <a href="courses.php?category=<?php echo urlencode($cat['nom_categorie']); ?>" 
+                           class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                            Voir les cours
                         </a>
                     </div>
                 </div>
-
-            <?php
-            
+            <?php 
                     }
-                    if($index <= 8){
-                        $index++;
-                    }else{
-                        $index = 0;
-                    }
-                    
-
-                } 
-
-            }else{
-                echo '
-                    <div class="md:col-span-2 lg:col-span-3">
-                        <h1 class="font-semibold text-4xl text-center text-red-600">PAS DE CATEGORIES POUR LE MOMENTS</h1>
-                    </div>
-                ';
-            }
-            
+                }
             ?>
-            
-            
-
         </section>
     </main>
 
