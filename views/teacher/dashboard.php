@@ -5,6 +5,7 @@
     require_once "../../classes/teacher.php";
     require_once "../../classes/Categorie.php";
     require_once "../../classes/course.php";
+    require_once "../../classes/CoursDocument.php";
 
 
 
@@ -39,8 +40,70 @@
             header("Location: ../guest");
             exit;
         }
-    }
 
+        if(isset($_POST['add_course'])) {
+            try {
+                // Validation des fichiers
+                $allowed_image_types = ['image/jpeg', 'image/png', 'image/gif'];
+                $max_file_size = 5 * 1024 * 1024; // 5MB
+
+                // Vérification de l'image de couverture
+                if (!isset($_FILES['couverture']) || $_FILES['couverture']['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Erreur lors du téléchargement de l'image de couverture");
+                }
+                if (!in_array($_FILES['couverture']['type'], $allowed_image_types)) {
+                    throw new Exception("Type de fichier non autorisé pour l'image de couverture");
+                }
+                if ($_FILES['couverture']['size'] > $max_file_size) {
+                    throw new Exception("L'image de couverture est trop volumineuse (max 5MB)");
+                }
+
+                // Vérification du PDF
+                if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception("Erreur lors du téléchargement du PDF");
+                }
+                if ($_FILES['pdf_file']['type'] !== 'application/pdf') {
+                    throw new Exception("Le fichier doit être au format PDF");
+                }
+                if ($_FILES['pdf_file']['size'] > $max_file_size) {
+                    throw new Exception("Le fichier PDF est trop volumineux (max 5MB)");
+                }
+
+                // Création des noms de fichiers uniques
+                $cover_extension = pathinfo($_FILES['couverture']['name'], PATHINFO_EXTENSION);
+                $pdf_extension = pathinfo($_FILES['pdf_file']['name'], PATHINFO_EXTENSION);
+                $unique_prefix = uniqid();
+                $cover_filename = $unique_prefix . '_cover.' . $cover_extension;
+                $pdf_filename = $unique_prefix . '_document.' . $pdf_extension;
+
+                // Déplacement des fichiers
+                $upload_path = '../../uploads/';
+                move_uploaded_file($_FILES['couverture']['tmp_name'], $upload_path . $cover_filename);
+                move_uploaded_file($_FILES['pdf_file']['tmp_name'], $upload_path . $pdf_filename);
+
+                // Création du cours
+                $new_course = new CoursDocument(
+                    htmlspecialchars($_POST['titre']),
+                    htmlspecialchars($_POST['description']),
+                    $cover_filename,
+                    $pdf_filename,
+                    'pdf',
+                    $_FILES['pdf_file']['size'],
+                    'En Attente',
+                    'Facile'
+                );
+
+                if($new_course->create($enseignant->getId())) {
+                    echo "<script>alert('Cours ajouté avec succès !');</script>";
+                } else {
+                    throw new Exception("Erreur lors de la création du cours");
+                }
+
+            } catch (Exception $e) {
+                echo "<script>alert('Erreur : " . addslashes($e->getMessage()) . "');</script>";
+            }
+        }
+    }
 ?>
 
 
