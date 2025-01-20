@@ -54,6 +54,28 @@ class User {
         return $this->status;
     }
 
+    // Validation methods
+    private function validateEmail($email) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("L'adresse email n'est pas valide");
+        }
+        return true;
+    }
+
+    private function validatePassword($password) {
+        if (strlen($password) < 8) {
+            throw new Exception("Le mot de passe doit contenir au moins 8 caractères");
+        }
+        return true;
+    }
+
+    private function validatePhone($phone) {
+        if (!preg_match("/^[0-9]{10}$/", $phone)) {
+            throw new Exception("Le numéro de téléphone n'est pas valide");
+        }
+        return true;
+    }
+
     // SETTERS
     public function setNom($nom) {
         $this->nom = $nom;
@@ -62,13 +84,16 @@ class User {
         $this->prenom = $prenom;
     }
     public function setTelephone($telephone) {
+        $this->validatePhone($telephone);
         $this->telephone = $telephone;
     }
     public function setEmail($email) {
+        $this->validateEmail($email);
         $this->email = $email;
     }
     public function setPassword($password) {
-        $this->password = $password;
+        $this->validatePassword($password);
+        $this->password = password_hash($password, PASSWORD_DEFAULT);
     }
     public function setRole($role) {
         $this->role = $role;
@@ -87,10 +112,12 @@ class User {
     // LOGIN METHOD
     public function login($email, $password) {
         try {
+            $this->validateEmail($email);
+            
             $query = "SELECT u.*, r.label as role 
                      FROM users u 
                      JOIN roles r ON u.id_role = r.id_role 
-                     WHERE u.email = :email";
+                     WHERE u.email = :email AND u.statut = 'Actif'";
             
             $stmt = $this->database->prepare($query);
             $stmt->bindValue(':email', $email, PDO::PARAM_STR);
@@ -99,26 +126,30 @@ class User {
             if ($stmt->rowCount() > 0) {
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (password_verify($password, $user['password'])) {
-                    $this->id = $user['id_user'];
-                    $this->prenom = $user['prenom'];
-                    $this->nom = $user['nom'];
-                    $this->email = $user['email'];
-                    $this->telephone = $user['phone'];
-                    $this->role = $user['role'];
-                    $this->photo = $user['photo'];
-                    $this->status = $user['statut'];
-                    return $this;
-                } else {
-                    echo '<script>alert("Le mot de passe est incorrect !")</script>';
-                    return false;
+                    return [
+                        'success' => true,
+                        'user' => [
+                            'id' => $user['id_user'],
+                            'nom' => $user['nom'],
+                            'prenom' => $user['prenom'],
+                            'email' => $user['email'],
+                            'role' => $user['role'],
+                            'photo' => $user['photo']
+                        ]
+                    ];
                 }
-            } else {
-                echo '<script>alert("Aucun utilisateur trouvé avec cet email !")</script>';
-                return false;
             }
-        } catch(PDOException $e) {
-            echo '<script>alert("Erreur lors de la connexion : ' . $e->getMessage() . '")</script>';
-            return false;
+            
+            return [
+                'success' => false,
+                'message' => 'Email ou mot de passe incorrect'
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e->getMessage()
+            ];
         }
     }
 
@@ -145,7 +176,7 @@ class User {
             $stmt->bindValue(':nom', $this->nom, PDO::PARAM_STR);
             $stmt->bindValue(':phone', $this->telephone, PDO::PARAM_STR);
             $stmt->bindValue(':email', $this->email, PDO::PARAM_STR);
-            $stmt->bindValue(':password', password_hash($this->password, PASSWORD_DEFAULT), PDO::PARAM_STR);
+            $stmt->bindValue(':password', $this->password, PDO::PARAM_STR);
             $stmt->bindValue(':photo', $this->photo, PDO::PARAM_STR);
             $stmt->bindValue(':role', $this->role, PDO::PARAM_INT);
             

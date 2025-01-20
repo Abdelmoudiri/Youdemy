@@ -31,38 +31,32 @@
             } else {
                 $user = new User("","","",$email,$password,"","","");
     
-                $loggedInUser = $user->login((string)$user->getEmail(), (string)$user->getPassword());
+                $loginResult = $user->login((string)$user->getEmail(), (string)$user->getPassword());
     
-                if ($loggedInUser) {
-                    if($loggedInUser->getStatus() == 'Actif'){
-                        $_SESSION['id_user'] = htmlspecialchars($loggedInUser->getId(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['prenom'] = htmlspecialchars($loggedInUser->getPrenom(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['nom'] = htmlspecialchars($loggedInUser->getNom(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['email'] = htmlspecialchars($loggedInUser->getEmail(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['phone'] = htmlspecialchars($loggedInUser->getTelephone(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['role'] = htmlspecialchars($loggedInUser->getRole(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['photo'] = htmlspecialchars($loggedInUser->getPhoto(), ENT_QUOTES, 'UTF-8');
-                        $_SESSION['status'] = htmlspecialchars($loggedInUser->getStatus(), ENT_QUOTES, 'UTF-8');
-
-                        if($_SESSION['role'] === 'Admin'){
-                            header("Location: ../admin/dashboard.php");
-                        } else if($_SESSION['role'] === 'Enseignant'){
-                            header("Location: ../teacher/dashboard.php");
-                        } else if($_SESSION['role'] === 'Etudiant'){
-                            header("Location: ../student");
-                        }
-                        exit;
-                    }else if($loggedInUser->getStatus() == 'Bloqué'){
-                        echo '<script>alert("Votre Compte est Bloqué pour le Moment !")</script>';
-                    }else{
-                        echo '<script>alert("Votre Compte n\'est pas encore Confirmé !")</script>';
+                if ($loginResult['success']) {
+                    $userData = $loginResult['user'];
+                    $_SESSION['id_user'] = htmlspecialchars($userData['id'], ENT_QUOTES, 'UTF-8');
+                    $_SESSION['prenom'] = htmlspecialchars($userData['prenom'], ENT_QUOTES, 'UTF-8');
+                    $_SESSION['nom'] = htmlspecialchars($userData['nom'], ENT_QUOTES, 'UTF-8');
+                    $_SESSION['email'] = htmlspecialchars($userData['email'], ENT_QUOTES, 'UTF-8');
+                    $_SESSION['role'] = htmlspecialchars($userData['role'], ENT_QUOTES, 'UTF-8');
+                    $_SESSION['photo'] = htmlspecialchars($userData['photo'], ENT_QUOTES, 'UTF-8');
+    
+                    if($_SESSION['role'] === 'Admin'){
+                        header("Location: ../admin/dashboard.php");
+                    } else if($_SESSION['role'] === 'Enseignant'){
+                        header("Location: ../teacher/dashboard.php");
+                    } else if($_SESSION['role'] === 'Etudiant'){
+                        header("Location: ../student");
                     }
+                    exit;
+                } else {
+                    echo '<script>alert("' . htmlspecialchars($loginResult['message'], ENT_QUOTES, 'UTF-8') . '")</script>';
                 }
             }
         }
     }
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>

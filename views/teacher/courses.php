@@ -3,15 +3,24 @@
     session_start();
 
     require_once "../../classes/teacher.php";
-    require_once "../../classes/category.php";
-    require_once "../../classes/course.php";
+    require_once "../../classes/Categorie.php";
+    require_once "../../classes/CoursDocument.php";
     require_once "../../classes/Tag.php";
 
 
+    $enseignant = new Teacher(
+        (int)$_SESSION['id_user'],
+        $_SESSION['nom'],
+        $_SESSION['prenom'],
+        '',
+        $_SESSION['email'],
+        '',
+        $_SESSION['role'],
+        'Actif',  // Statut par défaut car l'utilisateur est connecté
+        $_SESSION['photo']
+    );
 
-    $enseignant = new Teacher((int)$_SESSION['id_user'],$_SESSION['nom'],$_SESSION['prenom'],'',$_SESSION['email'],'',$_SESSION['role'],$_SESSION['status'],$_SESSION['photo']);
-
-    $new_cour = new Course('','','','','','','');
+    $new_cour = new DocumentCourse('', '', '', '', '', 0, 'En Attente', 'Facile');
 
     if ($_SESSION['role'] !== 'Enseignant') {
         if ($_SESSION['role'] === 'Admin') {
@@ -29,7 +38,7 @@
             session_unset();
             session_destroy();
             header("Location: ../guest");
-            exit();
+            exit;
         }
         if(isset($_POST["delete"])) {
             $course = $_POST['course'];
@@ -43,7 +52,6 @@
     }
 
 ?>
-
 
 
 <!DOCTYPE html>
@@ -120,11 +128,19 @@
                 $courses = $enseignant->displayCourses($enseignant->getId());
                 if ($courses) {
                     foreach ($courses as $course) {
-                        $cours = new Course($course['titre'],$course['description'],$course['couverture'],$course['contenu'],$course['video'],$course['statut_cours'],$course['niveau']);
+                        $cours = new DocumentCourse(
+                            $course['titre'],
+                            $course['description'],
+                            $course['couverture'],
+                            $course['contenu'] ?? '',
+                            'pdf',  // format par défaut
+                            0,      // taille par défaut
+                            $course['statut_cours'],
+                            $course['niveau']
+                        );
                         $cours->setDate($course['date_publication']);
                         $category = new Categorie($course['nom_categorie'],'');
             ?>
-
             <div class="relative pb-5 flex flex-col gap-5 rounded-md bg-white shadow-md hover:shadow-lg">
                 <div class="">
                     <img src="../../uploads/<?php echo $cours->getCouverture() ?>" class="rounded-t-md w-full h-64">
@@ -183,7 +199,6 @@
                 }
             }else{
             ?>
-
             <?php
             }
             ?>

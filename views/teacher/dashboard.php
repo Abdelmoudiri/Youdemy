@@ -3,12 +3,22 @@
     session_start();
 
     require_once "../../classes/teacher.php";
-    require_once "../../classes/category.php";
+    require_once "../../classes/Categorie.php";
     require_once "../../classes/course.php";
 
 
 
-    $enseignant = new Teacher((int)$_SESSION['id_user'],$_SESSION['nom'],$_SESSION['prenom'],'',$_SESSION['email'],'',$_SESSION['role'],$_SESSION['status'],$_SESSION['photo']);
+    $enseignant = new Teacher(
+        (int)$_SESSION['id_user'],
+        $_SESSION['nom'],
+        $_SESSION['prenom'],
+        '',
+        $_SESSION['email'],
+        '',
+        $_SESSION['role'],
+        'Actif',  // Statut par défaut car l'utilisateur est connecté
+        $_SESSION['photo']
+    );
 
 
     if ($_SESSION['role'] !== 'Enseignant') {
@@ -27,7 +37,7 @@
             session_unset();
             session_destroy();
             header("Location: ../guest");
-            exit();
+            exit;
         }
     }
 
@@ -154,7 +164,6 @@
                         $courses = $count['course_count'];
                         $category = new Categorie($count['nom_categorie'],'');
                 ?>
-
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-5">
                         <div class="h-10 w-10 rounded-full text-xl text-blue-600 bg-blue-100 flex items-center justify-center">

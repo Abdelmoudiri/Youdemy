@@ -1,11 +1,15 @@
 <?php
 
-    require_once __DIR__ . '/User.php';
+    require_once __DIR__ . '/user.php';
+    require_once __DIR__ . '/../config/db.php';
 
     class Teacher extends User {
 
+        private $database;
+
         public function __construct($id,$nom,$prenom,$telephone,$email,$password,$role,$status,$photo) {
             parent::__construct( $nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
+            $this->database = Database::getInstance()->getConnection();
 
         }
 
@@ -110,7 +114,7 @@
         // Get total number of teachers
         public function getTotalTeachers() {
             try {
-                $stmt = $this->connect()->query("SELECT COUNT(*) as total FROM users WHERE role = 'teacher'");
+                $stmt = $this->database->query("SELECT COUNT(*) as total FROM users WHERE role = 'teacher'");
                 $result = $stmt->fetch();
                 return $result['total'];
             } catch(PDOException $e) {
@@ -132,7 +136,7 @@
                          WHERE u.role = 'teacher'
                          GROUP BY u.id_user";
                 
-                $stmt = $this->connect()->query($query);
+                $stmt = $this->database->query($query);
                 $teachers = $stmt->fetchAll();
                 
                 // Format the data

@@ -28,40 +28,40 @@ $tag = new Tag("");
                 <div class="px-4 py-2">
                     <ul class="space-y-2">
                         <li>
-                            <a href="#dashboard" data-section="dashboard" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('dashboard')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-home mr-3"></i>
                                 <span>Dashboard</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a href="#courses" data-section="courses" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('courses')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-book mr-3"></i>
                                 <span>Courses</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a href="#categories" data-section="categories" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('categories')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-folder mr-3"></i>
                                 <span>Categories</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a href="#tags" data-section="tags" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('tags')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-tags mr-3"></i>
                                 <span>Tags</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a href="#teachers" data-section="teachers" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('teachers')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-chalkboard-teacher mr-3"></i>
                                 <span>Teachers</span>
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a href="#students" data-section="students" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+                            <button onclick="showSection('students')" class="nav-link w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
                                 <i class="fas fa-user-graduate mr-3"></i>
                                 <span>Students</span>
-                            </a>
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -386,49 +386,28 @@ $tag = new Tag("");
     </div>
 
     <script>
-        // Navigation
-        document.addEventListener('DOMContentLoaded', function() {
-            // Function to show section
-            function showSection(sectionId) {
-                // Hide all sections
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.add('hidden');
-                });
-                
-                // Show selected section
-                const targetSection = document.getElementById(sectionId);
-                if (targetSection) {
-                    targetSection.classList.remove('hidden');
-                }
-                
-                // Update active state in navigation
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    link.classList.remove('bg-gray-100');
-                    if (link.getAttribute('href') === '#' + sectionId) {
-                        link.classList.add('bg-gray-100');
-                    }
-                });
+        function showSection(sectionId) {
+            // Cacher toutes les sections
+            var sections = document.getElementsByClassName('section');
+            for (var i = 0; i < sections.length; i++) {
+                sections[i].style.display = 'none';
             }
-
-            // Handle navigation clicks
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const sectionId = this.getAttribute('data-section');
-                    showSection(sectionId);
-                    window.location.hash = sectionId;
-                });
-            });
-
-            // Handle initial load and browser back/forward
-            function handleHashChange() {
-                const hash = window.location.hash.slice(1) || 'dashboard';
-                showSection(hash);
+            
+            // Afficher la section sélectionnée
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Mettre à jour l'état actif dans la navigation
+            var navLinks = document.getElementsByClassName('nav-link');
+            for (var i = 0; i < navLinks.length; i++) {
+                navLinks[i].classList.remove('bg-gray-100');
             }
+            event.currentTarget.classList.add('bg-gray-100');
+        }
 
-            window.addEventListener('hashchange', handleHashChange);
-            handleHashChange(); // Handle initial load
-        });
+        // Afficher le dashboard par défaut
+        window.onload = function() {
+            showSection('dashboard');
+        };
 
         // Course actions
         function approveCourse(courseId) {
