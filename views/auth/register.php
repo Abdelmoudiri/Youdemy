@@ -74,6 +74,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 font-sans">
+<nav class="bg-white fixed w-full z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="flex items-center space-x-2">
+                        <img class="w-10 h-10" src="../../assets/img/logo.png" alt="YouDemy Logo">
+                        <span class="text-2xl font-bold">You<span class="text-blue-600">Demy</span></span>
+                    </a>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-blue-600 font-medium">Accueil</a>
+                    <a href="categories.php" class="text-gray-700 hover:text-blue-600 transition">Catégories</a>
+                    <a href="courses.php" class="text-gray-700 hover:text-blue-600 transition">Cours</a>
+                    <a href="contact.php" class="text-gray-700 hover:text-blue-600 transition">Contact</a>
+                    <div class="flex items-center space-x-4">
+                        <a href="../auth/login.php" class="px-4 py-2 text-gray-700 hover:text-blue-600 transition">Connexion</a>
+                        <a href="../auth/register.php" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Inscription</a>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="mobile-menu-button p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu hidden md:hidden bg-white border-t">
+            <a href="#" class="block py-3 px-4 text-blue-600 font-medium">Accueil</a>
+            <a href="categories.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Catégories</a>
+            <a href="courses.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Cours</a>
+            <a href="contact.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Contact</a>
+            <div class="px-4 py-3 space-y-2">
+                <a href="../auth/login.php" class="block w-full px-4 py-2 text-center text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Connexion</a>
+                <a href="../auth/register.php" class="block w-full px-4 py-2 text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700">Inscription</a>
+            </div>
+        </div>
+    </nav>
 
     <section class="min-h-screen flex items-center justify-center px-4 py-8">
         <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">

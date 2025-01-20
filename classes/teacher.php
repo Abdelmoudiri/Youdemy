@@ -1,12 +1,12 @@
 <?php
 
-    require_once __DIR__ .'./user.php';
+    require_once __DIR__ . '/User.php';
 
     class Teacher extends User {
 
         public function __construct($id,$nom,$prenom,$telephone,$email,$password,$role,$status,$photo) {
             parent::__construct( $nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
-            $this->id = $id;
+
         }
 
         // DISPLAY COURSES
@@ -104,6 +104,47 @@
                 return $results;
             } catch (PDOException $e) {
                 throw new Exception("Erreur lors de la Récupération des Derniers Cours : " . $e->getMessage());
+            }
+        }
+
+        // Get total number of teachers
+        public function getTotalTeachers() {
+            try {
+                $stmt = $this->connect()->query("SELECT COUNT(*) as total FROM users WHERE role = 'teacher'");
+                $result = $stmt->fetch();
+                return $result['total'];
+            } catch(PDOException $e) {
+                return 0;
+            }
+        }
+
+        // Get all teachers with their course counts
+        public function getAllTeachers() {
+            try {
+                $query = "SELECT u.id_user as id, 
+                                u.nom as name, 
+                                u.prenom as firstname,
+                                u.email,
+                                u.status as active,
+                                COUNT(c.id_course) as courses_count
+                         FROM users u
+                         LEFT JOIN courses c ON u.id_user = c.id_teacher
+                         WHERE u.role = 'teacher'
+                         GROUP BY u.id_user";
+                
+                $stmt = $this->connect()->query($query);
+                $teachers = $stmt->fetchAll();
+                
+                // Format the data
+                foreach ($teachers as &$teacher) {
+                    $teacher['name'] = $teacher['name'] . ' ' . $teacher['firstname'];
+                    $teacher['active'] = $teacher['active'] === 'active';
+                    unset($teacher['firstname']);
+                }
+                
+                return $teachers;
+            } catch(PDOException $e) {
+                return [];
             }
         }
 

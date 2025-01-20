@@ -1,34 +1,61 @@
 <?php
 
+require_once __DIR__ . '/../config/db.php';
+
 class Categorie {
-    private string $categorie_name;
-    private string $categorie_description;
+    private $database;
 
-    public function __construct(string $categorie_name, string $categorie_description) {
-        $this->categorie_name = $categorie_name;
-        $this->categorie_description = $categorie_description;
+    public function __construct() {
+        $this->database = Database::getInstance()->getConnection();
     }
 
-    public function getCategorieName(): string {
-        return $this->categorie_name;
+    public function getCoursesPerCategory($status) {
+        try {
+            $query = "SELECT 
+                        c.id_categorie,
+                        c.nom_categorie,
+                        c.description as description_categorie,
+                        COUNT(CASE WHEN co.statut_cours = ? THEN 1 END) as total_approved_courses
+                    FROM categories c
+                    LEFT JOIN courses co ON c.id_categorie = co.id_categorie
+                    GROUP BY c.id_categorie, c.nom_categorie, c.description
+                    ORDER BY c.nom_categorie";
+            
+            $stmt = $this->database->prepare($query);
+            $stmt->execute([$status]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            die("Erreur lors de la récupération des catégories : " . $e->getMessage());
+        }
     }
 
-    public function getCategorieDescription(): string {
-        return $this->categorie_description;
+    public function createCategory($nom, $description) {
+        try {
+            $query = "INSERT INTO categories (nom_categorie, description) VALUES (?, ?)";
+            $stmt = $this->database->prepare($query);
+            return $stmt->execute([$nom, $description]);
+        } catch (PDOException $e) {
+            die("Erreur lors de la création de la catégorie : " . $e->getMessage());
+        }
     }
 
-    public function creerCategory(): bool {
-        // Implementation for creating a new category
-        return true;
+    public function updateCategory($id, $nom, $description) {
+        try {
+            $query = "UPDATE categories SET nom_categorie = ?, description = ? WHERE id_categorie = ?";
+            $stmt = $this->database->prepare($query);
+            return $stmt->execute([$nom, $description, $id]);
+        } catch (PDOException $e) {
+            die("Erreur lors de la modification de la catégorie : " . $e->getMessage());
+        }
     }
 
-    public function modifierCategory(): bool {
-        // Implementation for modifying an existing category
-        return true;
-    }
-
-    public function supprimerCategory(): bool {
-        // Implementation for deleting a category
-        return true;
+    public function deleteCategory($id) {
+        try {
+            $query = "DELETE FROM categories WHERE id_categorie = ?";
+            $stmt = $this->database->prepare($query);
+            return $stmt->execute([$id]);
+        } catch (PDOException $e) {
+            die("Erreur lors de la suppression de la catégorie : " . $e->getMessage());
+        }
     }
 }

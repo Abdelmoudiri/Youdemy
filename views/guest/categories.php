@@ -1,23 +1,19 @@
 <?php
     session_start();
+    require_once '../../classes/Categorie.php';
 
-    require_once __DIR__.'../../classes/category.php';
-
-    $category = new Categorie('','');
-
-    if (isset($_SESSION["role"])){
-        if($_SESSION['role'] === 'Admin'){
+    if (isset($_SESSION["role"])) {
+        if ($_SESSION['role'] === 'Admin') {
             header("Location: ../admin/dashboard.php");
-        }else if($_SESSION['role'] === 'Enseignant'){
+        } else if ($_SESSION['role'] === 'Enseignant') {
             header("Location: ../teacher/dashboard.php");
-        }else{
-            header("Location: ../student");
+        } else {
+            header("Location: ../student/dashboard.php");
         }
-        exit;
+        exit();
     }
 
-
-
+    $category = new Categorie();
 ?>
 
 <!DOCTYPE html>
@@ -25,119 +21,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youdemy</title>
-    <link rel="icon" href="../../assets/img/logo.png">
-    <link rel="stylesheet" href="../../assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <title>Catégories - YouDemy</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
     <header>
-        <!-- Navbar Section -->
-        <nav class="px-5 py-3 flex items-center justify-between gap-5 shadow-md bg-white bg-opacity-90 shadow-lg fixed w-full z-50">
-            <a href="../guest/" class="flex items-center gap-1">
-                <img class="w-14" src="../../assets/img/logo.png" alt="Logo de Youdemy Plateforme">
-                <h1 class="text-2xl font-semibold">You<span class="text-blue-800">Demy</span></h1>
-            </a>
-            <div class="hidden lg:flex items-center justify-between gap-20">
-                <ul class="flex items-center gap-10 text-md">
-                    <a href="../guest/"><li class="cursor-pointer duration-300 hover:text-blue-600 hover:font-medium hover:border-b-2 hover:border-blue-600 hover:pb-3">Accueil</li></a>
-                    <a href="#"><li class="active cursor-pointer duration-300">Catégories</li></a>
-                    <a href="courses.php"><li class="cursor-pointer duration-300 hover:text-blue-600 hover:font-medium hover:border-b-2 hover:border-blue-600 hover:pb-3">Cours</li></a>
-                    <a href="contact.php"><li class="cursor-pointer duration-300 hover:text-blue-600 hover:font-medium hover:border-b-2 hover:border-blue-600 hover:pb-3">Contact</li></a>
-                </ul>
-                <div class="flex gap-3">
-                    <a href="../auth/login.php">
-                        <button class="rounded-sm py-1 px-5 border border-black text-md duration-500 hover:text-white hover:bg-blue-700 hover:border-blue-500">Connexion</button>
-                    </a>
-                    <a href="../auth/register.php">
-                        <button class="rounded-sm py-1 px-5 border border-blue-500 text-md text-white bg-blue-600 duration-500 hover:bg-blue-900 hover:border-blue-900">Inscription</button>
+    <nav class="bg-white fixed w-full z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="#" class="flex items-center space-x-2">
+                        <img class="w-10 h-10" src="../../assets/img/logo.png" alt="YouDemy Logo">
+                        <span class="text-2xl font-bold">You<span class="text-blue-600">Demy</span></span>
                     </a>
                 </div>
-            </div>
-            <div class="lg:hidden flex items-center">
-                <button class="mobile-menu-button">
-                    <i class="fas fa-bars text-blue-600 text-2xl"></i>
-                </button>
-            </div>
-            <div class="bg-white mobile-menu hidden lg:hidden absolute left-0 top-[70px] flex-1 w-full">
-                <a href="../guest/" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Accueil</a>
-                <a href="#" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Catégories</a>
-                <a href="courses.php" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Cours</a>
-                <a href="contact.php" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Contact</a>
-                <a href="../auth/login.php" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Connexion</a>
-                <a href="../auth/register.php" class="block py-2 px-4 text-sm hover:bg-blue-600 hover:text-white">Inscription</a>
-            </div>
-        </nav>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-blue-600 font-medium">Accueil</a>
+                    <a href="categories.php" class="text-gray-700 hover:text-blue-600 transition">Catégories</a>
+                    <a href="courses.php" class="text-gray-700 hover:text-blue-600 transition">Cours</a>
+                    <a href="contact.php" class="text-gray-700 hover:text-blue-600 transition">Contact</a>
+                    <div class="flex items-center space-x-4">
+                        <a href="../auth/login.php" class="px-4 py-2 text-gray-700 hover:text-blue-600 transition">Connexion</a>
+                        <a href="../auth/register.php" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Inscription</a>
+                    </div>
+                </div>
 
-        <!-- Hero Section -->
-        <section class="category h-[85vh] pt-24 flex justify-center items-center text-white text-center">
-            <div class="flex flex-col items-center gap-5">
-                <h1 class="font-bold text-5xl">Explorez nos Catégories</h1>
-                <p class="text-xl font-extralight">Découvrez une large gamme de sujets pour enrichir vos connaissances</p>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="mobile-menu-button p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
             </div>
-        </section>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu hidden md:hidden bg-white border-t">
+            <a href="#" class="block py-3 px-4 text-blue-600 font-medium">Accueil</a>
+            <a href="categories.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Catégories</a>
+            <a href="courses.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Cours</a>
+            <a href="contact.php" class="block py-3 px-4 text-gray-700 hover:bg-gray-50">Contact</a>
+            <div class="px-4 py-3 space-y-2">
+                <a href="../auth/login.php" class="block w-full px-4 py-2 text-center text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Connexion</a>
+                <a href="../auth/register.php" class="block w-full px-4 py-2 text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700">Inscription</a>
+            </div>
+        </div>
+    </nav>
     </header>
 
-    <main class="px-5 py-10">
+    <main class="px-5 py-20">
         <section class="md:grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            
             <?php
-            
             $categories = $category->getCoursesPerCategory('Approuvé');
-            $color = ['blue-600','red-600','green-600','orange-600','purple-600','gray-600','rose-600', 'black'];
-
-            $index = 0;
-
-            if(is_array($categories)){
-                foreach($categories as $categorie) {
-                    if($categorie['total_approved_courses'] != 0){ ?>
-
-                    <div class="category-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                    <div class="relative h-48 bg-<?php echo $color[$index]; ?>">
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <i class="text-white text-3xl"><?php echo $categorie['total_approved_courses']; ?> Cours</i>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-2xl font-bold mb-2"><?php echo $categorie['categorie']; ?></h3>
-                        <p class="text-gray-600 mb-4"><?php echo $categorie['description']; ?></p>
-                        <a href="courses.php" class="inline-block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                            Explorer les cours
-                        </a>
-                    </div>
-                </div>
-
-            <?php
             
-                    }
-                    if($index <= 8){
-                        $index++;
-                    }else{
-                        $index = 0;
-                    }
-                    
 
-                } 
-
-            }else{
-                echo '
-                    <div class="md:col-span-2 lg:col-span-3">
-                        <h1 class="font-semibold text-4xl text-center text-red-600">PAS DE CATEGORIES POUR LE MOMENTS</h1>
-                    </div>
-                ';
-            }
-            
+            if (is_array($categories)) {
+                foreach ($categories as $cat) {
+                    if ($cat['total_approved_courses'] > 0) {
             ?>
-            
-            
-
+                        <div class="category-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 mb-5">
+                            <div class="relative h-48 bg-black">
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <h3 class="text-2xl font-bold text-white"><?php echo htmlspecialchars($cat['nom_categorie']); ?></h3>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <p class="text-gray-600"><?php echo htmlspecialchars($cat['description_categorie']); ?></p>
+                                <div class="mt-4 flex justify-between items-center">
+                                    <span class="text-sm text-gray-500"><?php echo $cat['total_approved_courses']; ?> cours disponibles</span>
+                                    <a href="courses.php?category=<?php echo $cat['id_categorie']; ?>" 
+                                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                        Voir les cours
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+            <?php
+                      
+                    }
+                }
+            }
+            ?>
         </section>
     </main>
-
-    <?php include_once '../../includes/footer.php'; ?>
-
-
-    <script src="../../assets/js/main.js"></script>
 </body>
 </html>

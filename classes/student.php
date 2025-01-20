@@ -1,6 +1,6 @@
 <?php
 
-    require_once __DIR__ .'./user.php';
+    require_once __DIR__ . '/User.php';
 
     class Student extends User {
 
@@ -58,6 +58,57 @@
                 return $courses;
             } catch (PDOException $e) {
                 throw new Exception('Erreur lors de la récupération des cours inscrits : ' . $e->getMessage());
+            }
+        }
+
+        // Get total number of students
+        public function getTotalStudents() {
+            try {
+                $stmt = $this->connect()->query("SELECT COUNT(*) as total FROM users WHERE role = 'student'");
+                $result = $stmt->fetch();
+                return $result['total'];
+            } catch(PDOException $e) {
+                return 0;
+            }
+        }
+
+        // Get all students with their enrolled courses count
+        public function getAllStudents() {
+            try {
+                $query = "SELECT u.id_user as id, 
+                                u.nom as name, 
+                                u.prenom as firstname,
+                                u.email,
+                                u.created_at as join_date,
+                                COUNT(e.id_course) as enrolled_courses
+                         FROM users u
+                         LEFT JOIN enrollments e ON u.id_user = e.id_student
+                         WHERE u.role = 'student'
+                         GROUP BY u.id_user";
+                
+                $stmt = $this->connect()->query($query);
+                $students = $stmt->fetchAll();
+                
+                // Format the data
+                foreach ($students as &$student) {
+                    $student['name'] = $student['name'] . ' ' . $student['firstname'];
+                    unset($student['firstname']);
+                }
+                
+                return $students;
+            } catch(PDOException $e) {
+                return [];
+            }
+        }
+
+        // Enroll student in a course
+        public function enrollCourse($courseId) {
+            try {
+                $query = "INSERT INTO enrollments (id_student, id_course, enrollment_date) VALUES (?, ?, NOW())";
+                $stmt = $this->connect()->prepare($query);
+                return $stmt->execute([$this->id, $courseId]);
+            } catch(PDOException $e) {
+                return false;
             }
         }
     }
