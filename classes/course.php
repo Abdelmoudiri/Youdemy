@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../config/db.php';
 
 abstract class Course {
     protected int $id;
@@ -17,16 +18,7 @@ abstract class Course {
         string $statut,
         string $niveau
     ) {
-        try {
-            $this->database = new PDO(
-                "mysql:host=localhost;dbname=youdemy;charset=utf8mb4",
-                "root",
-                "",
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-            );
-        } catch(PDOException $e) {
-            die("Erreur de connexion : " . $e->getMessage());
-        }
+        $this->database = Database::getInstance()->getConnection();
         $this->titre = $titre;
         $this->description = $description;
         $this->couverture = $couverture;

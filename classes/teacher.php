@@ -7,9 +7,8 @@
 
         private $database;
 
-        public function __construct($id = null, $nom = '', $prenom = '', $telephone = '', $email = '', $password = '', $role = '', $status = '', $photo = 'user.png') {
+        public function __construct( $nom = '', $prenom = '', $telephone = '', $email = '', $password = '', $role = '', $status = '', $photo = 'user.png') {
             parent::__construct($nom, $prenom, $telephone, $email, $password, $role, $status, $photo);
-            $this->id = $id;
             $this->database = Database::getInstance()->getConnection();
 
         }
@@ -112,7 +111,6 @@
             }
         }
 
-        // Get total number of teachers
         public function getTotalTeachers() {
             try {
                 $stmt = $this->database->query("SELECT COUNT(*) as total FROM users WHERE role = 'teacher'");
@@ -123,7 +121,6 @@
             }
         }
 
-        // Get all teachers with their course counts
         public function getAllTeachers() {
             try {
                 $query = "SELECT u.id_user as id, 
@@ -139,8 +136,6 @@
                 
                 $stmt = $this->database->query($query);
                 $teachers = $stmt->fetchAll();
-                
-                // Format the data
                 foreach ($teachers as &$teacher) {
                     $teacher['name'] = $teacher['name'] . ' ' . $teacher['firstname'];
                     $teacher['active'] = $teacher['active'] === 'active';

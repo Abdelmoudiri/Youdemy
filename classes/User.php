@@ -183,8 +183,7 @@ class User {
             $query = "INSERT INTO users (nom, prenom, phone, email, password, id_role, statut) VALUES (:nom, :prenom, :phone, :email, :password, :role, 'Actif')";
             $stmt = $this->database->prepare($query);
             
-            // Récupérer l'ID du rôle
-            $roleId = 2; // Par défaut, rôle étudiant
+            $roleId = 2;
             if ($role === 'Enseignant') {
                 $roleId = 3;
             }

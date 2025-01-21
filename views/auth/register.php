@@ -22,7 +22,6 @@
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        // if (isset($_POST['registerBtn'])) {
             $nom = htmlspecialchars($_POST['nom'], ENT_QUOTES, 'UTF-8');
             $prenom = htmlspecialchars($_POST['prenom'], ENT_QUOTES, 'UTF-8');
             $phone = htmlspecialchars($_POST['phone'], ENT_QUOTES, 'UTF-8');
@@ -131,6 +130,7 @@
                     <span class="block sm:inline"><?php echo $error_message; ?></span>
                 </div>
             <?php endif; ?>
+            
             <!-- Register Form -->
             <form method="POST" action="" id="registerForm" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">

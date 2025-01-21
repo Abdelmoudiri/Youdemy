@@ -1,28 +1,16 @@
 <?php
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/User.php';
 
-class Student {
-    private $id_user;
-    private $nom;
-    private $prenom;
-    private $email;
-    private $password;
-    private $photo;
-    private $role;
-    private $date_inscription;
-    protected $database;
+class Student extends User {
+    private $database;
 
-    public function __construct($nom = '', $prenom = '', $email = '', $password = '', $photo = '', $role = '', $date_inscription = '', $id_user = null) {
+    public function __construct($nom = '', $prenom = '', $email = '', $password = '', $photo = '', $role = 'student') 
+    {
+        parent::__construct($nom, $prenom, '', $email, $password, $role, 'active', $photo);
         $this->database = Database::getInstance()->getConnection();
-        $this->nom = $nom;
-        $this->prenom = $prenom;
-        $this->email = $email;
-        $this->password = $password;
-        $this->photo = $photo;
-        $this->role = $role;
-        $this->date_inscription = $date_inscription;
-        $this->id_user = $id_user;
+
     }
 
     public function getCourseDetails($courseId) {
@@ -66,13 +54,13 @@ class Student {
 
     public function enrollCourse($courseId) {
         try {
-            if ($this->isEnrolled($this->id_user, $courseId)) {
+            if ($this->isEnrolled($this->getId(), $courseId)) {
                 return false;
             }
 
             $sql = "INSERT INTO enrollments (id_student, id_course, date_enrolement) VALUES (:studentId, :courseId, NOW())";
             $stmt = $this->database->prepare($sql);
-            $stmt->bindParam(':studentId', $this->id_user, PDO::PARAM_INT);
+            $stmt->bindParam(':studentId', $this->getId(), PDO::PARAM_INT);
             $stmt->bindParam(':courseId', $courseId, PDO::PARAM_INT);
             return $stmt->execute();
         } catch(PDOException $e) {
@@ -125,61 +113,4 @@ class Student {
         }
     }
 
-    // Getters
-    public function getId() {
-        return $this->id_user;
-    }
-
-    public function getNom() {
-        return $this->nom;
-    }
-
-    public function getPrenom() {
-        return $this->prenom;
-    }
-
-    public function getEmail() {
-        return $this->email;
-    }
-
-    public function getPhoto() {
-        return $this->photo;
-    }
-
-    public function getRole() {
-        return $this->role;
-    }
-
-    public function getDateInscription() {
-        return $this->date_inscription;
-    }
-
-    // Setters
-    public function setId($id) {
-        $this->id_user = $id;
-    }
-
-    public function setNom($nom) {
-        $this->nom = $nom;
-    }
-
-    public function setPrenom($prenom) {
-        $this->prenom = $prenom;
-    }
-
-    public function setEmail($email) {
-        $this->email = $email;
-    }
-
-    public function setPhoto($photo) {
-        $this->photo = $photo;
-    }
-
-    public function setRole($role) {
-        $this->role = $role;
-    }
-
-    public function setDateInscription($date) {
-        $this->date_inscription = $date;
-    }
 }
