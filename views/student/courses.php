@@ -18,7 +18,7 @@
         $_SESSION['prenom'] ?? '',
         $_SESSION['phone'] ?? '',
         $_SESSION['email'] ?? '',
-        '',  // pas besoin de mot de passe pour l'instance
+        '',  
         'Etudiant',
         'Actif',
         $_SESSION['photo'] ?? 'user.png'

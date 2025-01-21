@@ -52,26 +52,9 @@ class Student extends User {
         }
     }
 
-    public function enrollCourse($courseId) {
-        try {
-            if ($this->isEnrolled($this->getId(), $courseId)) {
-                return false;
-            }
-
-            $sql = "INSERT INTO enrollments (id_student, id_course, date_enrolement) VALUES (:studentId, :courseId, NOW())";
-            $stmt = $this->database->prepare($sql);
-            $stmt->bindParam(':studentId', $this->getId(), PDO::PARAM_INT);
-            $stmt->bindParam(':courseId', $courseId, PDO::PARAM_INT);
-            return $stmt->execute();
-        } catch(PDOException $e) {
-            error_log("Erreur lors de l'inscription au cours : " . $e->getMessage());
-            return false;
-        }
-    }
-
+   
     public function subscribeToCourse($student_id, $course_id) {
         try {
-            // Vérifier si l'étudiant n'est pas déjà inscrit
             if ($this->isEnrolled($student_id, $course_id)) {
                 return false;
             }
