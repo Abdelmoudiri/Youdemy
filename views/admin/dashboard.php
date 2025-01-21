@@ -5,10 +5,21 @@ include_once "../../classes/Tag.php";
 
 $admin = new Admin("", "", "", "", "", "");
 $tag = new Tag("");
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['disconnect'])) {
+        session_unset();
+        session_destroy();
+        header("Location: ../guest");
+        exit;
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,6 +28,7 @@ $tag = new Tag("");
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
 </head>
+
 <body class="bg-gray-100">
     <div class="flex">
         <!-- Sidebar -->
@@ -63,6 +75,12 @@ $tag = new Tag("");
                                 <span>Students</span>
                             </button>
                         </li>
+                        <form method="POST" action="">
+                            <button name="disconnect" class="flex items-center gap-3 duration-300 hover:bg-gray-200 w-full pl-5 hover:border-r-4 hover:border-gray-400 py-3">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                Déconnexion
+                            </button>
+                        </form>
                     </ul>
                 </div>
             </nav>
@@ -108,33 +126,32 @@ $tag = new Tag("");
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($admin->showCourses() as $course): ?>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($course['titre']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($course['prenom'] . ' ' . $course['nom']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            <?= $course['status'] === 'approved' ? 'bg-green-100 text-green-800' : 
-                                               ($course['status'] === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
-                                            <?= ucfirst(htmlspecialchars($course['status'] ?? 'pending')) ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <?php if ($course['status'] === 'pending'): ?>
-                                        <button onclick="approveCourse(<?= $course['id_course'] ?>)" 
-                                                class="text-green-600 hover:text-green-900 mr-3">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button onclick="refuseCourse(<?= $course['id_course'] ?>)" 
-                                                class="text-red-600 hover:text-red-900 mr-3">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                        <?php endif; ?>
-                                        <button onclick="deleteCourse(<?= $course['id_course'] ?>)" 
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($course['titre']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($course['prenom'] . ' ' . $course['nom']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            <?= $course['status'] === 'approved' ? 'bg-green-100 text-green-800' : ($course['status'] === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') ?>">
+                                                <?= ucfirst(htmlspecialchars($course['status'] ?? 'pending')) ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <?php if ($course['status'] === 'pending'): ?>
+                                                <button onclick="approveCourse(<?= $course['id_course'] ?>)"
+                                                    class="text-green-600 hover:text-green-900 mr-3">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button onclick="refuseCourse(<?= $course['id_course'] ?>)"
+                                                    class="text-red-600 hover:text-red-900 mr-3">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            <?php endif; ?>
+                                            <button onclick="deleteCourse(<?= $course['id_course'] ?>)"
                                                 class="text-red-600 hover:text-red-900">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -162,20 +179,20 @@ $tag = new Tag("");
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($admin->showCategories() as $category): ?>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($category['nom_categorie']) ?></td>
-                                    <td class="px-6 py-4"><?= htmlspecialchars($category['description']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <button onclick="editCategory(<?= $category['id_categorie'] ?>, '<?= addslashes($category['nom_categorie']) ?>', '<?= addslashes($category['description']) ?>')" 
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($category['nom_categorie']) ?></td>
+                                        <td class="px-6 py-4"><?= htmlspecialchars($category['description']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button onclick="editCategory(<?= $category['id_categorie'] ?>, '<?= addslashes($category['nom_categorie']) ?>', '<?= addslashes($category['description']) ?>')"
                                                 class="text-blue-600 hover:text-blue-900 mr-3">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="confirmDelete('category', <?= $category['id_categorie'] ?>)" 
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="confirmDelete('category', <?= $category['id_categorie'] ?>)"
                                                 class="text-red-600 hover:text-red-900">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -202,19 +219,19 @@ $tag = new Tag("");
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($admin->showTags() as $tag): ?>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($tag['nom_tag']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <button onclick="editTag(<?= $tag['id_tag'] ?>, '<?= addslashes($tag['nom_tag']) ?>')" 
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($tag['nom_tag']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button onclick="editTag(<?= $tag['id_tag'] ?>, '<?= addslashes($tag['nom_tag']) ?>')"
                                                 class="text-blue-600 hover:text-blue-900 mr-3">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="confirmDelete('tag', <?= $tag['id_tag'] ?>)" 
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="confirmDelete('tag', <?= $tag['id_tag'] ?>)"
                                                 class="text-red-600 hover:text-red-900">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -239,30 +256,30 @@ $tag = new Tag("");
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($admin->showTeachers() as $teacher): ?>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($teacher['prenom'] . ' ' . $teacher['nom']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($teacher['email']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= $teacher['course_count'] ?? '0' ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($teacher['prenom'] . ' ' . $teacher['nom']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($teacher['email']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= $teacher['course_count'] ?? '0' ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             <?= ($teacher['status'] ?? 'pending') === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                            <?= ucfirst(htmlspecialchars($teacher['status'] ?? 'pending')) ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <?php if (($teacher['status'] ?? 'pending') === 'blocked'): ?>
-                                        <button onclick="activateTeacher(<?= $teacher['id_user'] ?>)" 
-                                                class="text-green-600 hover:text-green-900 mr-3">
-                                            <i class="fas fa-check"></i> Activate
-                                        </button>
-                                        <?php else: ?>
-                                        <button onclick="blockTeacher(<?= $teacher['id_user'] ?>)" 
-                                                class="text-yellow-600 hover:text-yellow-900 mr-3">
-                                            <i class="fas fa-ban"></i> Block
-                                        </button>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
+                                                <?= ucfirst(htmlspecialchars($teacher['status'] ?? 'pending')) ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <?php if (($teacher['status'] ?? 'pending') === 'blocked'): ?>
+                                                <button onclick="activateTeacher(<?= $teacher['id_user'] ?>)"
+                                                    class="text-green-600 hover:text-green-900 mr-3">
+                                                    <i class="fas fa-check"></i> Activate
+                                                </button>
+                                            <?php else: ?>
+                                                <button onclick="blockTeacher(<?= $teacher['id_user'] ?>)"
+                                                    class="text-yellow-600 hover:text-yellow-900 mr-3">
+                                                    <i class="fas fa-ban"></i> Block
+                                                </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -287,30 +304,30 @@ $tag = new Tag("");
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($admin->showStudents() as $student): ?>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['prenom'] . ' ' . $student['nom']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['email']) ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap"><?= $student['enrolled_courses'] ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['prenom'] . ' ' . $student['nom']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= htmlspecialchars($student['email']) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><?= $student['enrolled_courses'] ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                             <?= $student['status'] === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                            <?= ucfirst($student['status']) ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <?php if ($student['status'] === 'blocked'): ?>
-                                        <button onclick="activateStudent(<?= $student['id_user'] ?>)" 
-                                                class="text-green-600 hover:text-green-900 mr-3">
-                                            <i class="fas fa-check"></i> Activate
-                                        </button>
-                                        <?php else: ?>
-                                        <button onclick="blockStudent(<?= $student['id_user'] ?>)" 
-                                                class="text-yellow-600 hover:text-yellow-900 mr-3">
-                                            <i class="fas fa-ban"></i> Block
-                                        </button>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
+                                                <?= ucfirst($student['status']) ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <?php if ($student['status'] === 'blocked'): ?>
+                                                <button onclick="activateStudent(<?= $student['id_user'] ?>)"
+                                                    class="text-green-600 hover:text-green-900 mr-3">
+                                                    <i class="fas fa-check"></i> Activate
+                                                </button>
+                                            <?php else: ?>
+                                                <button onclick="blockStudent(<?= $student['id_user'] ?>)"
+                                                    class="text-yellow-600 hover:text-yellow-900 mr-3">
+                                                    <i class="fas fa-ban"></i> Block
+                                                </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -334,20 +351,20 @@ $tag = new Tag("");
                 <div class="mb-4">
                     <label for="category_name" class="block text-sm font-medium text-gray-700">Nom</label>
                     <input type="text" name="category_name" id="category_name" required
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
                     <label for="category_description" class="block text-sm font-medium text-gray-700">Description</label>
                     <textarea name="category_description" id="category_description" rows="3" required
-                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeModal('categoryModal')"
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                         Annuler
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                         Enregistrer
                     </button>
                 </div>
@@ -369,15 +386,15 @@ $tag = new Tag("");
                 <div class="mb-4">
                     <label for="tag_name" class="block text-sm font-medium text-gray-700">Nom</label>
                     <input type="text" name="tag_name" id="tag_name" required
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeModal('tagModal')"
-                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                         Annuler
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                        class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
                         Enregistrer
                     </button>
                 </div>
@@ -392,10 +409,10 @@ $tag = new Tag("");
             for (var i = 0; i < sections.length; i++) {
                 sections[i].style.display = 'none';
             }
-            
+
             // Afficher la section sélectionnée
             document.getElementById(sectionId).style.display = 'block';
-            
+
             // Mettre à jour l'état actif dans la navigation
             var navLinks = document.getElementsByClassName('nav-link');
             for (var i = 0; i < navLinks.length; i++) {
@@ -455,4 +472,5 @@ $tag = new Tag("");
         }
     </script>
 </body>
+
 </html>
